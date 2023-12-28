@@ -15,3 +15,5 @@ Mentor: Petar Stipanović (pero@pmfst.hr)
 In this simulation, we model a 2D quantum trimer using quantum mechanics principles. The trimer consists of three interacting particles, and we study their quantum states, energy levels, and dynamics.
 
 ## Installation
+
+gcc main.c -o main.exe
