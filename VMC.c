@@ -117,12 +117,12 @@ int main(void)
 // probna valna funkcija
 double Psi(double r)
 {
-    // double alpha = 4.16; // 1;
-    double alpha = 4.16; // 1;
-    // double alpha = 1; // 1;
-    double gamma = 2.82; // 1;
-    // double gamma = 1; // 1;
-    double s = 0.0027; // 1;
-    // double s = 1; // 1;
+    // double alpha = 4.16;
+    double alpha = 4.16;
+    // double alpha = 1;
+    double gamma = 2.82;
+    // double gamma = 1;
+    double s = 0.0027;
+    // double s = 1;
     return exp(-pow(alpha / r, gamma) - s * r) / r;
 }
