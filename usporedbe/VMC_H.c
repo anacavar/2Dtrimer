@@ -57,11 +57,12 @@ int main()
   accept = 0.;                 // prihvacanje
   dk[1] = dk[2] = dk[3] = 1.5; // maksimalne promjene koordinata
   fout = fopen("E.dat", "w");  // datoteka za pohranu srednjih vrijednosti
+
   // inicijalizacija polozaja gdje je gustoca Psi*Psi znacajna
-  for (iw = 1; iw <= Nw; iw++)
+  for (iw = 1; iw <= Nw; iw++) // po setacima
   {
     r2 = 0.;
-    for (k = 1; k <= 3; k++)
+    for (k = 1; k <= 3; k++) // po česticama
     {
       x[k][iw] = 15. * (ran1(&idum) - 0.5);
       r2 = r2 + x[k][iw] * x[k][iw];
@@ -70,6 +71,7 @@ int main()
     P[iw] = Psi(r1, x[3][iw]) * Psi(r1, x[3][iw]);
     E[iw] = 2. / r1 * (b - 1.) - b * b;
   }
+
   SbE = 0.;
   SbE2 = 0.;
   for (ib = 1; ib <= Nb; ib++)

@@ -13,20 +13,22 @@ int main(void)
 #pragma region // KONSTANTE & VARIJABLE
     long idum = -1234;
     int i, j, k, ib;
-    float x[3][Nw]; // indeks čestice, indeks šetača
-    float y[3][Nw]; // indeks čestice, indeks šetača
-    float L0 = 9;
-    float dx, dy;            // promjene koordinata čestica
-    float dxyMax = L0 / 100; // maksimalne promjene x,y,z koordinata
-    float V[Nw];             // potencijal između 3 čestice šetača u poslijednjem koraku ?
-    float delta_V, random_number;
-    float x_old[3], y_old[3];
-    float Psi(float);             // probna valna funkcija
-    float psi_initial, psi_final; // ukupna inicijalna i finalna probna valna funkcija
-    float r12, r23, r13;          // udaljenosti između čestica
-    float T;                      // vjerojatnost prijelaza Ri -> Rf
+    double x[3][Nw];          // indeks čestice, indeks šetača
+    double y[3][Nw];          // indeks čestice, indeks šetača
+    double L0 = 10;           // angstromi (10^(−10) m))
+    double dx, dy;            // promjene koordinata čestica
+    double dxyMax = L0 / 100; // maksimalne promjene x,y,z koordinata
+    double x_old[3], y_old[3];
+    double random_number;
+    double Psi(double);            // probna valna funkcija
+    double P[Nw];                  // vjerojatnost prijelaza Ri -> Rf za svakog šetača posebno
+    double psi_initial, psi_final; // ukupna inicijalna i finalna probna valna funkcija
+    double r12, r23, r13;          // udaljenosti između čestica
+    double T;                      // vjerojatnost prijelaza Ri -> Rf
     int accepted = 0, rejected = 0;
-    float ratio;
+    double ratio;
+    // double sigma; // "najzgodnije je sigmu mjerit u angstremima"
+    // double energija; // "energiju mjerimo u K preko boltzmannove konstante"
 #pragma endregion
 
     FILE *data;
@@ -34,15 +36,19 @@ int main(void)
     data = fopen("data.txt", "w");
     koordinate = fopen("koordinate.txt", "w");
 
-    // inicijalizacija čestica
+    // inicijalizacija čestica gdje je gustoća Psi*Psi znacajna
     for (i = 0; i < Nw; i++) // po šetačima
     {
         for (j = 0; j < 3; j++) // po česticama
         {
-            x[j][i] = ran1(&idum) * L0;
-            y[j][i] = ran1(&idum) * L0;
+            x[j][i] = (2 * ran1(&idum) - 1) * L0;
+            y[j][i] = (2 * ran1(&idum) - 1) * L0;
         }
         fprintf(koordinate, "%f\t%f\t%f\t%f\t%f\t%f\n", x[0][i], y[0][i], x[1][i], y[1][i], x[2][i], y[2][i]);
+        r12 = sqrt(pow((x[0][i] - x[1][i]), 2) + pow((y[0][i] - y[1][i]), 2));
+        r23 = sqrt(pow((x[1][i] - x[2][i]), 2) + pow((y[1][i] - y[2][i]), 2));
+        r13 = sqrt(pow((x[0][i] - x[2][i]), 2) + pow((y[0][i] - y[2][i]), 2));
+        P[i] = Psi(r12) * Psi(r23) * Psi(r13);
     }
 
     for (i = 0; i < Nk; i++) // po koracima
@@ -60,10 +66,7 @@ int main(void)
             }
             // METROPOLIS ALGORITAM
             // T = |P(Rf)|^2/|P(Ri)|^2; za svakog šetača posebno
-            r12 = sqrt(pow((x_old[0] - x_old[1]), 2) + pow((y_old[0] - y_old[1]), 2));
-            r23 = sqrt(pow((x_old[1] - x_old[2]), 2) + pow((y_old[1] - y_old[2]), 2));
-            r13 = sqrt(pow((x_old[0] - x_old[2]), 2) + pow((y_old[0] - y_old[2]), 2));
-            psi_initial = Psi(r12) * Psi(r23) * Psi(r13);
+            psi_initial = P[j];
             r12 = sqrt(pow((x[0][j] - x[1][j]), 2) + pow((y[0][j] - y[1][j]), 2));
             r23 = sqrt(pow((x[1][j] - x[2][j]), 2) + pow((y[1][j] - y[2][j]), 2));
             r13 = sqrt(pow((x[0][j] - x[2][j]), 2) + pow((y[0][j] - y[2][j]), 2));
@@ -76,20 +79,24 @@ int main(void)
             {
                 // prihvaćamo pomak
                 accepted++;
+                P[j] = psi_final;
+                printf("T: %f\n", T);
             }
             else
             {
                 random_number = ran1(&idum);
-                if (random_number < T) // je li sigurno ovako ili je možda obrnuto?
+                if (random_number <= T)
                 {
                     // prihvaćamo pomak
                     accepted++;
+                    P[j] = psi_final;
+                    // printf("T: %f\tRand: %f\n", T, random_number);
                 }
                 else
                 {
                     // odbacujemo pomak
                     rejected++;
-                    printf("T: %f\tRand: %f\n", T, random_number);
+                    // printf("T: %f\tRand: %f\n", T, random_number);
                     for (k = 0; k < 3; k++) // po česticama
                     {
                         x[k][j] = x_old[k];
@@ -100,21 +107,22 @@ int main(void)
         }
     }
 
-    ratio = (float)accepted / (float)(accepted + rejected);
+    ratio = (double)accepted / (double)(accepted + rejected);
     printf("Prihvacenih: %d\nOdbijenih: %d\nOmjer: %f\n", accepted, rejected, ratio);
-
     fclose(data);
     fclose(koordinate);
     return 0;
 }
 
 // probna valna funkcija
-float Psi(float r)
+double Psi(double r)
 {
-    // šta je s ovima? otkud te varijable? brijem da ću ih varirat u VMCu
-    float alpha = 1;
-    float gamma = 1;
-    float s = 1;
-    // jel koristim ovu probnu ili neku drugu? PITAJ PERU
+    // double alpha = 4.16; // 1;
+    double alpha = 4.16; // 1;
+    // double alpha = 1; // 1;
+    double gamma = 2.82; // 1;
+    // double gamma = 1; // 1;
+    double s = 0.0027; // 1;
+    // double s = 1; // 1;
     return exp(-pow(alpha / r, gamma) - s * r) / r;
 }
