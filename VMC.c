@@ -146,7 +146,7 @@ int main(void)
             // fprintf(fout, "%7d%16.8e%16.8e\n", NbEff, SkE / Nk, SbE / NbEff);
             fprintf(data, "%f\t%f\t%f\n", NbEff, SkE / Nk, SbE / NbEff);
         }
-        itmp = (int)(round(acc_ib * 100.));
+        itmp = (int)(round(ratio * 100.));
         printf("%6d. blok:  %d%% prihvacenih,  Eb = %10.2e\n", NbEff, itmp, SkE / Nk);
     } // kraj petlje blokova
 
