@@ -25,3 +25,9 @@
 //     }
 //     return U;
 // }
+
+
+
+// printf("r12: %f\tr23: %f\tr13: %f\n", r12, r23, r13);
+// printf("Psi(R12): %f\n", Psi(r12));
+// printf("Psi_initial: %f\tPsi_final: %f\n", psi_initial, psi_final);

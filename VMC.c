@@ -5,9 +5,9 @@
 #include <math.h>
 #include "ran1.c"
 
-#define Nw 10    // broj šetača
-#define Nk 1000  // broj koraka
-#define Nb 1     // broj blokova
+#define Nw 1     // broj šetača
+#define Nk 10    // broj koraka
+#define Nb 50    // broj blokova
 #define NbSkip 0 // broj prvih blokova koje preskačemo
 
 double E_kin_L(double, double, double); // kinetički dio lokalne energije
@@ -20,11 +20,11 @@ int main(void)
 #pragma region // KONSTANTE & VARIJABLE
     long idum = -1234;
     int i, j, k, ib;
-    double x[3][Nw];          // indeks čestice, indeks šetača
-    double y[3][Nw];          // indeks čestice, indeks šetača
-    double L0 = 10;           // angstromi (10^(−10) m))
-    double dx, dy;            // promjene koordinata čestica
-    double dxyMax = L0 / 100; // maksimalne promjene x,y,z koordinata
+    double x[3][Nw];         // indeks čestice, indeks šetača
+    double y[3][Nw];         // indeks čestice, indeks šetača
+    double L0 = 10;          // angstromi (10^(−10) m))
+    double dx, dy;           // promjene koordinata čestica
+    double dxyMax = L0 / 10; // maksimalne promjene x,y,z koordinata
     double x_old[3], y_old[3];
     double random_number;
     double Psi(double);            // probna valna funkcija
@@ -33,7 +33,6 @@ int main(void)
     double r12, r23, r13;          // udaljenosti između čestica
     double T;                      // vjerojatnost prijelaza Ri -> Rf
     int accepted = 0, rejected = 0;
-    double acc_ib; // accepted / (ib*Nw*Nk)
     double ratio;
     double SwE;  // = suma(srednjih E) po setacima
     double SkE;  // = suma (srednjih E) po koracima
@@ -46,11 +45,8 @@ int main(void)
 #pragma endregion
 
     FILE *data;
-    FILE *koordinate;
     data = fopen("data.txt", "w");
-    koordinate = fopen("koordinate.txt", "w");
-
-    // inicijalizacija čestica gdje je gustoća Psi*Psi znacajna
+    // inicijalizacija koordinata čestica gdje je gustoća Psi*Psi znacajna
     for (i = 0; i < Nw; i++) // po šetačima
     {
         for (j = 0; j < 3; j++) // po česticama
@@ -58,7 +54,6 @@ int main(void)
             x[j][i] = (2 * ran1(&idum) - 1) * L0;
             y[j][i] = (2 * ran1(&idum) - 1) * L0;
         }
-        fprintf(koordinate, "%f\t%f\t%f\t%f\t%f\t%f\n", x[0][i], y[0][i], x[1][i], y[1][i], x[2][i], y[2][i]);
         r12 = sqrt(pow((x[0][i] - x[1][i]), 2) + pow((y[0][i] - y[1][i]), 2));
         r23 = sqrt(pow((x[1][i] - x[2][i]), 2) + pow((y[1][i] - y[2][i]), 2));
         r13 = sqrt(pow((x[0][i] - x[2][i]), 2) + pow((y[0][i] - y[2][i]), 2));
@@ -92,32 +87,30 @@ int main(void)
                 r23 = sqrt(pow((x[1][j] - x[2][j]), 2) + pow((y[1][j] - y[2][j]), 2));
                 r13 = sqrt(pow((x[0][j] - x[2][j]), 2) + pow((y[0][j] - y[2][j]), 2));
                 psi_final = Psi(r12) * Psi(r23) * Psi(r13);
-                printf("r12: %f\tr23: %f\tr13: %f\n", r12, r23, r13);
-                printf("Psi(R12): %f\n", Psi(r12));
-                printf("Psi_initial: %f\tPsi_final: %f\n", psi_initial, psi_final);
-                T = psi_final * psi_final / psi_initial * psi_initial;
-                if (T > 1)
+                T = psi_final * psi_final / (psi_initial * psi_initial);
+                // T = psi_final * psi_fin / psi_initial * psi_initial;
+                // printf("r12: %f\tr23: %f\tr13: %f\n", r12, r23, r13);
+                // printf("Psi(R12): %f\n", Psi(r12));
+                printf("Psi_initial: %f\tPsi_final: %f => T=psi_f2/psi_i2= %f\n", psi_initial, psi_final, T);
+                if (T > 1) // prihvaćamo pomak
                 {
-                    // prihvaćamo pomak
                     accepted++;
                     P[j] = psi_final;
-                    printf("T: %f\n", T);
+                    printf("accepted, T: %f\n", T);
                 }
                 else
                 {
                     random_number = ran1(&idum);
-                    if (random_number <= T)
+                    if (random_number <= T) // prihvaćamo pomak
                     {
-                        // prihvaćamo pomak
                         accepted++;
                         P[j] = psi_final;
-                        // printf("T: %f\tRand: %f\n", T, random_number);
+                        printf("accepted, T: %f\tRand: %f\n", T, random_number);
                     }
-                    else
+                    else // odbacujemo pomak
                     {
-                        // odbacujemo pomak
                         rejected++;
-                        // printf("T: %f\tRand: %f\n", T, random_number);
+                        printf("rejected, T: %f\tRand: %f\n", T, random_number);
                         for (k = 0; k < 3; k++) // po česticama
                         {
                             x[k][j] = x_old[k];
@@ -127,7 +120,6 @@ int main(void)
                 }
                 // ovdje sad mislim računamo Lokalnu energiju - za svakog šetača, nakon što smo prihvatili (ili odbacili) korak
                 E_L[j] = E_kin_L(r12, r13, r23);
-                // fprintf(data, "%d %f\n", i, E_L[j]);
                 SwE = SwE + E_L[j]; // prije kraja petlje šetača
             }                       // kraj petlje šetača
             // akumulacija podataka nakon stabilizacije  - zašto je ovo ovdje? - jer je ovo nakon kraja šetača za svaki korak nakon početnih skippaninh
@@ -137,17 +129,17 @@ int main(void)
             }
         } // kraj petlje koraka
         // maksimalnu duljinu koraka podešavamo kako bi prihvaćanje bilo oko 50% - dakle tek nakon svakog bloka ovo radimo
-        acc_ib = (double)accepted / (ib * Nw * Nk); // jel ovo just moj tzv ratio?
         ratio = (double)accepted / (double)(accepted + rejected);
-        // printf("Prihvacenih: %d\nOdbijenih: %d\nOmjer: %f\n", accepted, rejected, ratio);
-        printf("acc_ib: %f =? %f\n", acc_ib, ratio);
+        printf("Prihvacenih: %d\nOdbijenih: %d\nOmjer: %f\n", accepted, rejected, ratio);
 
-        if (acc_ib > 0.5)
+        if (ratio > 0.5)
             dxyMax = dxyMax * 1.05;
-        if (acc_ib < 0.5)
+        if (ratio < 0.5)
             dxyMax = dxyMax * 0.95;
 
-        if (ib > NbSkip)
+        printf("dxyMax = %f\n", dxyMax);
+
+        if (ib >= NbSkip)
         {
             SbE += SkE / Nk;
             SbE2 += SkE * SkE / (Nk * Nk);
@@ -156,10 +148,10 @@ int main(void)
         }
         itmp = (int)(round(acc_ib * 100.));
         printf("%6d. blok:  %d%% prihvacenih,  Eb = %10.2e\n", NbEff, itmp, SkE / Nk);
-    }
+    } // kraj petlje blokova
 
     fclose(data);
-    fclose(koordinate);
+    // fclose(koordinate);
     return 0;
 }
 
@@ -179,31 +171,24 @@ double E_pot_L(double r12, double r13, double r23)
 
 double U_LJ(double r)
 {
-    // double sigma; // "najzgodnije je sigmu mjerit u angstremima"
-    double sigma = 4; // angstrema?? što mi to garantira? jesu li i alfe itd u angstrima?
-    // double epsilon; // d"energiju mjerimo u K preko boltzmannove konstante"
-    double epsilon = 12; // dubina jame brijem - K - zakaj u kelvinima? pa čjemu? kak u kelvinima? jel pašu mjerne jed??
+    double sigma = 4;    // angstrema - kako?
+    double epsilon = 12; // dubina jame, u kelvinima preko boltzmannove konstante - kako?
     return 4 * epsilon * (pow((sigma / r), 12) - pow((sigma / r), 6));
 }
 
 double E_kin_L(double r12, double r13, double r23)
 {
-    double mass = 4.; // u??? kako znam je li ovo u u?/// je li ovo okej???
-    double hbar = 1.; // ŠTA STAVIT OVDJE???
+    double mass = 4.; // u - kako?
+    double hbar = 1.; // koju vrijednost trebam ovdje?
     double D = pow(hbar, 2) / (2 * mass);
-    // tu se pitam što je s ovim... glupim hbar i masom?? možda probaj skalirat, jedno kroz drugo, pa šta dobiješ?
     return -D * (f_ddr(r12) + f_ddr(r13) + pow((f_dr(r12) + f_dr(r13)), 2) + f_ddr(r12) + f_ddr(r23) + pow((f_dr(r12) + f_dr(r23)), 2) + f_ddr(r13) + f_ddr(r23) + pow((f_dr(r13) + f_dr(r23)), 2));
 }
 
 double f_dr(double r)
 {
-    // double alpha = 4.16;
     double alpha = 4.16;
-    // double alpha = 1;
     double gamma = 2.82;
-    // double gamma = 1;
     double s = 0.0027;
-    // double s = 1;
     return 1 / pow(r, 2) * (gamma * pow((alpha / r), gamma) - s - 1 / 2);
 }
 
