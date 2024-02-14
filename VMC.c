@@ -20,11 +20,11 @@ int main(void)
 #pragma region // KONSTANTE & VARIJABLE
     long idum = -1234;
     int i, j, k, ib;
-    double x[3][Nw];         // indeks čestice, indeks šetača
-    double y[3][Nw];         // indeks čestice, indeks šetača
-    double L0 = 10;          // angstromi (10^(−10) m))
-    double dx, dy;           // promjene koordinata čestica
-    double dxyMax = L0 / 10; // maksimalne promjene x,y,z koordinata
+    double x[3][Nw];          // indeks čestice, indeks šetača
+    double y[3][Nw];          // indeks čestice, indeks šetača
+    double L0 = 10;           // angstromi (10^(−10) m))
+    double dx, dy;            // promjene koordinata čestica
+    double dxyMax = L0 / 100; // maksimalne promjene x,y,z koordinata
     double x_old[3], y_old[3];
     double random_number;
     double Psi(double);            // probna valna funkcija
@@ -144,7 +144,7 @@ int main(void)
             SbE += SkE / Nk;
             SbE2 += SkE * SkE / (Nk * Nk);
             // fprintf(fout, "%7d%16.8e%16.8e\n", NbEff, SkE / Nk, SbE / NbEff);
-            fprintf(data, "%f\t%f\t%f\n", NbEff, SkE / Nk, SbE / NbEff);
+            fprintf(data, "%d\t%f\t%f\n", NbEff, SkE / Nk, SbE / NbEff);
         }
         itmp = (int)(round(ratio * 100.));
         printf("%6d. blok:  %d%% prihvacenih,  Eb = %10.2e\n", NbEff, itmp, SkE / Nk);
