@@ -112,7 +112,7 @@ int main()
           }
           accept += 1.;
           P[iw] = Pp;
-          E[iw] = 2. / r1 * (b - 1.) - b * b;
+          E[iw] = 2. / r1 * (b - 1.) - b * b; // što je i otkud ovo?
         }
         SwE = SwE + E[iw];
       } // setaci
