@@ -5,10 +5,10 @@
 #include <math.h>
 #include "ran1.c"
 
-#define Nw 1     // broj šetača
-#define Nk 10    // broj koraka
-#define Nb 50    // broj blokova
-#define NbSkip 0 // broj prvih blokova koje preskačemo
+#define Nw 10     // broj šetača
+#define Nt 10     // broj koraka
+#define Nb 210    // broj blokova
+#define NbSkip 10 // broj prvih blokova koje preskačemo
 
 double E_kin_L(double, double, double); // kinetički dio lokalne energije
 double E_pot_L(double, double, double); // kinetički dio lokalne energije
@@ -19,83 +19,79 @@ int main(void)
 {
 #pragma region // KONSTANTE & VARIJABLE
     long idum = -1234;
-    int i, j, k, ib;
-    double x[3][Nw];          // indeks čestice, indeks šetača
-    double y[3][Nw];          // indeks čestice, indeks šetača
+    int ib, it, iw, k;
+    double x[4][Nw + 1], y[4][Nw + 1]; // indeks čestice, indeks šetača
+    double x_old[4], y_old[4];
     double L0 = 10;           // angstromi (10^(−10) m))
     double dx, dy;            // promjene koordinata čestica
     double dxyMax = L0 / 100; // maksimalne promjene x,y,z koordinata
-    double x_old[3], y_old[3];
     double random_number;
     double Psi(double);            // probna valna funkcija
-    double P[Nw];                  // vjerojatnost prijelaza Ri -> Rf za svakog šetača posebno
     double psi_initial, psi_final; // ukupna inicijalna i finalna probna valna funkcija
+    double P[Nw + 1];              // vjerojatnost prijelaza Ri -> Rf za svakog šetača posebno
+    double E_L[Nw + 1];            // lokalna energija zadnjeg koraka svakog od šetača
     double r12, r23, r13;          // udaljenosti između čestica
     double T;                      // vjerojatnost prijelaza Ri -> Rf
     int accepted = 0, rejected = 0;
     double ratio;
     double SwE;  // = suma(srednjih E) po setacima
-    double SkE;  // = suma (srednjih E) po koracima
+    double StE;  // = suma (srednjih E) po koracima
     double SbE;  // = suma (srednjih E) po blokovima
     double SbE2; // = suma (srednjih E) po blokovima
-    int NbEff;
-    int itmp;       // ŠTO JE OVO???
-    double E_L[Nw]; // lokalna energija zadnjeg koraka svakog od šetača
+    int NbEff;   // efektivni indeks bloka
+    int itmp;    // postotak prihvaćanja
 
 #pragma endregion
 
     FILE *data;
     data = fopen("data.txt", "w");
     // inicijalizacija koordinata čestica gdje je gustoća Psi*Psi znacajna
-    for (i = 0; i < Nw; i++) // po šetačima
+    for (iw = 1; iw <= Nw; iw++) // po šetačima
     {
-        for (j = 0; j < 3; j++) // po česticama
+        for (k = 1; k <= 3; k++) // po česticama
         {
-            x[j][i] = (2 * ran1(&idum) - 1) * L0;
-            y[j][i] = (2 * ran1(&idum) - 1) * L0;
+            x[k][iw] = (2 * ran1(&idum) - 1) * L0;
+            y[k][iw] = (2 * ran1(&idum) - 1) * L0;
         }
-        r12 = sqrt(pow((x[0][i] - x[1][i]), 2) + pow((y[0][i] - y[1][i]), 2));
-        r23 = sqrt(pow((x[1][i] - x[2][i]), 2) + pow((y[1][i] - y[2][i]), 2));
-        r13 = sqrt(pow((x[0][i] - x[2][i]), 2) + pow((y[0][i] - y[2][i]), 2));
-        P[i] = Psi(r12) * Psi(r23) * Psi(r13);
+        r12 = sqrt(pow((x[1][iw] - x[2][iw]), 2) + pow((y[1][iw] - y[2][iw]), 2));
+        r23 = sqrt(pow((x[2][iw] - x[3][iw]), 2) + pow((y[2][iw] - y[3][iw]), 2));
+        r13 = sqrt(pow((x[1][iw] - x[3][iw]), 2) + pow((y[1][iw] - y[3][iw]), 2));
+        P[iw] = Psi(r12) * Psi(r23) * Psi(r13);
     }
 
     SbE = 0.;
     SbE2 = 0;
-    for (ib = 0; ib < Nb; ib++)
+    for (ib = 1; ib <= Nb; ib++)
     { // blokovi
-        SkE = 0;
+        StE = 0;
         NbEff = ib - NbSkip;
-        for (i = 0; i < Nk; i++) // po koracima
+        for (it = 1; it <= Nt; it++) // po koracima
         {
             SwE = 0;
-            for (j = 0; j < Nw; j++) // po šetačima
+            for (iw = 1; iw <= Nw; iw++) // po šetačima
             {
-                for (k = 0; k < 3; k++) // po česticama
+                for (k = 1; k <= 3; k++) // po česticama
                 {
                     dx = (ran1(&idum) * 2 - 1) * dxyMax;
                     dy = (ran1(&idum) * 2 - 1) * dxyMax;
-                    x_old[k] = x[k][j];
-                    y_old[k] = y[k][j];
-                    x[k][j] += dx;
-                    y[k][j] += dy;
+                    x_old[k] = x[k][iw];
+                    y_old[k] = y[k][iw];
+                    x[k][iw] += dx;
+                    y[k][iw] += dy;
                 }
                 // METROPOLIS ALGORITAM
-                // T = |P(Rf)|^2/|P(Ri)|^2; za svakog šetača posebno
-                psi_initial = P[j];
-                r12 = sqrt(pow((x[0][j] - x[1][j]), 2) + pow((y[0][j] - y[1][j]), 2));
-                r23 = sqrt(pow((x[1][j] - x[2][j]), 2) + pow((y[1][j] - y[2][j]), 2));
-                r13 = sqrt(pow((x[0][j] - x[2][j]), 2) + pow((y[0][j] - y[2][j]), 2));
+                // T = |P(R_final)|^2/|P(R_initial)|^2; za svakog šetača posebno
+                psi_initial = P[iw];
+                r12 = sqrt(pow((x[1][iw] - x[2][iw]), 2) + pow((y[1][iw] - y[2][iw]), 2));
+                r23 = sqrt(pow((x[2][iw] - x[3][iw]), 2) + pow((y[2][iw] - y[3][iw]), 2));
+                r13 = sqrt(pow((x[1][iw] - x[3][iw]), 2) + pow((y[1][iw] - y[3][iw]), 2));
                 psi_final = Psi(r12) * Psi(r23) * Psi(r13);
                 T = psi_final * psi_final / (psi_initial * psi_initial);
-                // T = psi_final * psi_fin / psi_initial * psi_initial;
-                // printf("r12: %f\tr23: %f\tr13: %f\n", r12, r23, r13);
-                // printf("Psi(R12): %f\n", Psi(r12));
-                printf("Psi_initial: %f\tPsi_final: %f => T=psi_f2/psi_i2= %f\n", psi_initial, psi_final, T);
+                printf("Psi_initial: %f\tPsi_final: %f => T=psi_f**2/psi_i**2= %f\n", psi_initial, psi_final, T);
                 if (T > 1) // prihvaćamo pomak
                 {
                     accepted++;
-                    P[j] = psi_final;
+                    P[iw] = psi_final;
                     printf("accepted, T: %f\n", T);
                 }
                 else
@@ -104,31 +100,31 @@ int main(void)
                     if (random_number <= T) // prihvaćamo pomak
                     {
                         accepted++;
-                        P[j] = psi_final;
+                        P[iw] = psi_final;
                         printf("accepted, T: %f\tRand: %f\n", T, random_number);
                     }
                     else // odbacujemo pomak
                     {
                         rejected++;
                         printf("rejected, T: %f\tRand: %f\n", T, random_number);
-                        for (k = 0; k < 3; k++) // po česticama
+                        for (k = 1; k <= 3; k++) // po česticama
                         {
-                            x[k][j] = x_old[k];
-                            y[k][j] = y_old[k];
+                            x[k][iw] = x_old[k];
+                            y[k][iw] = y_old[k];
                         }
                     }
                 }
-                // ovdje sad mislim računamo Lokalnu energiju - za svakog šetača, nakon što smo prihvatili (ili odbacili) korak
-                E_L[j] = E_kin_L(r12, r13, r23);
-                SwE = SwE + E_L[j]; // prije kraja petlje šetača
-            }                       // kraj petlje šetača
-            // akumulacija podataka nakon stabilizacije  - zašto je ovo ovdje? - jer je ovo nakon kraja šetača za svaki korak nakon početnih skippaninh
+                // računamo Lokalnu energiju - za svakog šetača, nakon što smo prihvatili (ili odbacili) korak
+                E_L[iw] = E_kin_L(r12, r13, r23) + E_pot_L(r12, r13, r23); // kinetički dio + potencijalni dio
+                SwE = SwE + E_L[iw];
+            } // kraj petlje šetača
+            // akumulacija podataka nakon stabilizacije
             if (ib > NbSkip)
             {
-                SkE += SwE / Nw;
+                StE += SwE / Nw;
             }
         } // kraj petlje koraka
-        // maksimalnu duljinu koraka podešavamo kako bi prihvaćanje bilo oko 50% - dakle tek nakon svakog bloka ovo radimo
+        // nakon svakog bloka podeđavamo maksimalnu duljinu koraka kako bi prihvaćanje bilo oko 50%
         ratio = (double)accepted / (double)(accepted + rejected);
         printf("Prihvacenih: %d\nOdbijenih: %d\nOmjer: %f\n", accepted, rejected, ratio);
 
@@ -141,17 +137,15 @@ int main(void)
 
         if (ib >= NbSkip)
         {
-            SbE += SkE / Nk;
-            SbE2 += SkE * SkE / (Nk * Nk);
-            // fprintf(fout, "%7d%16.8e%16.8e\n", NbEff, SkE / Nk, SbE / NbEff);
-            fprintf(data, "%d\t%f\t%f\n", NbEff, SkE / Nk, SbE / NbEff);
+            SbE += StE / Nt;
+            SbE2 += StE * StE / (Nt * Nt);
+            fprintf(data, "%d\t%f\t%f\n", NbEff, StE / Nt, SbE / NbEff); // indeks bloka, srednji E po koracima, Srednji E po blokovima
         }
         itmp = (int)(round(ratio * 100.));
-        printf("%6d. blok:  %d%% prihvacenih,  Eb = %10.2e\n", NbEff, itmp, SkE / Nk);
+        printf("%6d. blok:  %d%% prihvacenih,  Eb = %10.2e\n", NbEff, itmp, StE / Nt);
     } // kraj petlje blokova
 
     fclose(data);
-    // fclose(koordinate);
     return 0;
 }
 
@@ -171,15 +165,15 @@ double E_pot_L(double r12, double r13, double r23)
 
 double U_LJ(double r)
 {
-    double sigma = 4;    // angstrema - kako?
-    double epsilon = 12; // dubina jame, u kelvinima preko boltzmannove konstante - kako?
+    double sigma = 4;    // angstrema
+    double epsilon = 12; // dubina jame, u kelvinima preko boltzmannove konstante
     return 4 * epsilon * (pow((sigma / r), 12) - pow((sigma / r), 6));
 }
 
 double E_kin_L(double r12, double r13, double r23)
 {
-    double mass = 4.; // u - kako?
-    double hbar = 1.; // koju vrijednost trebam ovdje?
+    double mass = 4.; // u (univerzalna atomska masena jedinica)
+    double hbar = 1.; // što ovdje?
     double D = pow(hbar, 2) / (2 * mass);
     return -D * (f_ddr(r12) + f_ddr(r13) + pow((f_dr(r12) + f_dr(r13)), 2) + f_ddr(r12) + f_ddr(r23) + pow((f_dr(r12) + f_dr(r23)), 2) + f_ddr(r13) + f_ddr(r23) + pow((f_dr(r13) + f_dr(r23)), 2));
 }
