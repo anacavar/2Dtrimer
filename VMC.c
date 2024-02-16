@@ -5,10 +5,19 @@
 #include <math.h>
 #include "ran1.c"
 
-#define Nw 10     // broj šetača
-#define Nt 10     // broj koraka
-#define Nb 210    // broj blokova
-#define NbSkip 10 // broj prvih blokova koje preskačemo
+#define Nw 10      // broj šetača
+#define Nt 10      // broj koraka
+#define Nb 210     // broj blokova
+#define NbSkip 10  // broj prvih blokova koje preskačemo
+#define sigma 4    // angstrema
+#define epsilon 12 // dubina jame, u kelvinima preko boltzmannove konstante
+#define L          // angstrema
+#define alpha 4.16 // čega
+#define gamma 2.82 // čega
+#define s 0.0027   // čega
+#define mass 4.    // u
+#define hbar 1.    // koliko?
+#define k_B 1.     // koliko?
 
 double E_kin_L(double, double, double); // kinetički dio lokalne energije
 double E_pot_L(double, double, double); // kinetički dio lokalne energije
@@ -40,11 +49,11 @@ int main(void)
     double SbE2; // = suma (srednjih E) po blokovima
     int NbEff;   // efektivni indeks bloka
     int itmp;    // postotak prihvaćanja
-
 #pragma endregion
 
     FILE *data;
     data = fopen("data.txt", "w");
+
     // inicijalizacija koordinata čestica gdje je gustoća Psi*Psi znacajna
     for (iw = 1; iw <= Nw; iw++) // po šetačima
     {
@@ -119,7 +128,7 @@ int main(void)
                 SwE = SwE + E_L[iw];
             } // kraj petlje šetača
             // akumulacija podataka nakon stabilizacije
-            if (ib > NbSkip)
+            if (ib >= NbSkip)
             {
                 StE += SwE / Nw;
             }
@@ -152,9 +161,6 @@ int main(void)
 // probna valna funkcija
 double Psi(double r)
 {
-    double alpha = 4.16;
-    double gamma = 2.82;
-    double s = 0.0027;
     return exp(-pow(alpha / r, gamma) - s * r) / sqrt(r);
 }
 
@@ -165,31 +171,22 @@ double E_pot_L(double r12, double r13, double r23)
 
 double U_LJ(double r)
 {
-    double sigma = 4;    // angstrema
-    double epsilon = 12; // dubina jame, u kelvinima preko boltzmannove konstante
+
     return 4 * epsilon * (pow((sigma / r), 12) - pow((sigma / r), 6));
 }
 
 double E_kin_L(double r12, double r13, double r23)
 {
-    double mass = 4.; // u (univerzalna atomska masena jedinica)
-    double hbar = 1.; // što ovdje?
     double D = pow(hbar, 2) / (2 * mass);
     return -D * (f_ddr(r12) + f_ddr(r13) + pow((f_dr(r12) + f_dr(r13)), 2) + f_ddr(r12) + f_ddr(r23) + pow((f_dr(r12) + f_dr(r23)), 2) + f_ddr(r13) + f_ddr(r23) + pow((f_dr(r13) + f_dr(r23)), 2));
 }
 
 double f_dr(double r)
 {
-    double alpha = 4.16;
-    double gamma = 2.82;
-    double s = 0.0027;
     return 1 / pow(r, 2) * (gamma * pow((alpha / r), gamma) - s - 1 / 2);
 }
 
 double f_ddr(double r)
 {
-    double alpha = 4.16;
-    double gamma = 2.82;
-    double s = 0.0027;
     return 1 / pow(r, 2) * (gamma * (gamma + 1) * pow((alpha / r), gamma) - s - 1 / 2);
 }
