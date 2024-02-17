@@ -7,11 +7,11 @@
 
 #define Nw 10      // broj šetača
 #define Nt 10      // broj koraka
-#define Nb 210     // broj blokova
+#define Nb 110     // broj blokova
 #define NbSkip 10  // broj prvih blokova koje preskačemo
 #define sigma 4    // angstrema
 #define epsilon 12 // dubina jame, u kelvinima preko boltzmannove konstante
-#define L          // angstrema
+#define L0 100.    // angstrema
 #define alpha 4.16 // čega
 #define gamma 2.82 // čega
 #define s 0.0027   // čega
@@ -31,7 +31,6 @@ int main(void)
     int ib, it, iw, k;
     double x[4][Nw + 1], y[4][Nw + 1]; // indeks čestice, indeks šetača
     double x_old[4], y_old[4];
-    double L0 = 10;           // angstromi (10^(−10) m))
     double dx, dy;            // promjene koordinata čestica
     double dxyMax = L0 / 100; // maksimalne promjene x,y,z koordinata
     double random_number;
@@ -43,12 +42,13 @@ int main(void)
     double T;                      // vjerojatnost prijelaza Ri -> Rf
     int accepted = 0, rejected = 0;
     double ratio;
-    double SwE;  // = suma(srednjih E) po setacima
-    double StE;  // = suma (srednjih E) po koracima
-    double SbE;  // = suma (srednjih E) po blokovima
-    double SbE2; // = suma (srednjih E) po blokovima
-    int NbEff;   // efektivni indeks bloka
-    int itmp;    // postotak prihvaćanja
+    double SwE;        // = suma(srednjih E) po setacima
+    double StE;        // = suma (srednjih E) po koracima
+    double SbE;        // = suma (srednjih E) po blokovima
+    double SbE2;       // = suma (srednjih E) po blokovima
+    double AE, sigmaE; // srednja vrijednost i standardna devijacija
+    int NbEff;         // efektivni indeks bloka
+    int itmp;          // postotak prihvaćanja
 #pragma endregion
 
     FILE *data;
@@ -96,12 +96,12 @@ int main(void)
                 r13 = sqrt(pow((x[1][iw] - x[3][iw]), 2) + pow((y[1][iw] - y[3][iw]), 2));
                 psi_final = Psi(r12) * Psi(r23) * Psi(r13);
                 T = psi_final * psi_final / (psi_initial * psi_initial);
-                printf("Psi_initial: %f\tPsi_final: %f => T=psi_f**2/psi_i**2= %f\n", psi_initial, psi_final, T);
+                // printf("Psi_initial: %f\tPsi_final: %f => T=psi_f**2/psi_i**2= %f\n", psi_initial, psi_final, T);
                 if (T > 1) // prihvaćamo pomak
                 {
                     accepted++;
                     P[iw] = psi_final;
-                    printf("accepted, T: %f\n", T);
+                    // printf("accepted, T: %f\n", T);
                 }
                 else
                 {
@@ -110,12 +110,12 @@ int main(void)
                     {
                         accepted++;
                         P[iw] = psi_final;
-                        printf("accepted, T: %f\tRand: %f\n", T, random_number);
+                        // printf("accepted, T: %f\tRand: %f\n", T, random_number);
                     }
                     else // odbacujemo pomak
                     {
                         rejected++;
-                        printf("rejected, T: %f\tRand: %f\n", T, random_number);
+                        // printf("rejected, T: %f\tRand: %f\n", T, random_number);
                         for (k = 1; k <= 3; k++) // po česticama
                         {
                             x[k][iw] = x_old[k];
@@ -135,14 +135,14 @@ int main(void)
         } // kraj petlje koraka
         // nakon svakog bloka podeđavamo maksimalnu duljinu koraka kako bi prihvaćanje bilo oko 50%
         ratio = (double)accepted / (double)(accepted + rejected);
-        printf("Prihvacenih: %d\nOdbijenih: %d\nOmjer: %f\n", accepted, rejected, ratio);
+        // printf("Prihvacenih: %d\nOdbijenih: %d\nOmjer: %f\n", accepted, rejected, ratio);
 
         if (ratio > 0.5)
             dxyMax = dxyMax * 1.05;
         if (ratio < 0.5)
             dxyMax = dxyMax * 0.95;
 
-        printf("dxyMax = %f\n", dxyMax);
+        // printf("dxyMax = %f\n", dxyMax);
 
         if (ib >= NbSkip)
         {
@@ -154,6 +154,10 @@ int main(void)
         printf("%6d. blok:  %d%% prihvacenih,  Eb = %10.2e\n", NbEff, itmp, StE / Nt);
     } // kraj petlje blokova
 
+    AE = SbE / NbEff;
+    sigmaE = sqrt((SbE2 / NbEff - AE * AE) / (NbEff - 1.));
+    printf("\n konacni max. korak: %6.2e\n", dxyMax);
+    printf("\n E = %8.5e +- %6.2e \n\n", AE, sigmaE);
     fclose(data);
     return 0;
 }
