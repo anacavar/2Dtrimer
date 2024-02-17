@@ -8,13 +8,13 @@
 #define Nw 10      // broj šetača
 #define Nt 10      // broj koraka
 #define Nb 110     // broj blokova
-#define NbSkip 10  // broj prvih blokova koje preskačemo
+#define NbSkip 0   // broj prvih blokova koje preskačemo
 #define sigma 4    // angstrema
 #define epsilon 12 // dubina jame, u kelvinima preko boltzmannove konstante
 #define L0 100.    // angstrema
-#define alpha 4.16 // čega
-#define gamma 2.82 // čega
-#define s 0.0027   // čega
+#define alpha 4.16 // čega?
+#define gamma 2.82 // čega?
+#define s 0.0027   // čega?
 #define mass 4.    // u
 #define hbar 1.    // koliko?
 #define k_B 1.     // koliko?
@@ -128,7 +128,7 @@ int main(void)
                 SwE = SwE + E_L[iw];
             } // kraj petlje šetača
             // akumulacija podataka nakon stabilizacije
-            if (ib >= NbSkip)
+            if (ib > NbSkip)
             {
                 StE += SwE / Nw;
             }
@@ -144,14 +144,14 @@ int main(void)
 
         // printf("dxyMax = %f\n", dxyMax);
 
-        if (ib >= NbSkip)
+        if (ib > NbSkip)
         {
             SbE += StE / Nt;
             SbE2 += StE * StE / (Nt * Nt);
             fprintf(data, "%d\t%f\t%f\n", NbEff, StE / Nt, SbE / NbEff); // indeks bloka, srednji E po koracima, Srednji E po blokovima
+            itmp = (int)(round(ratio * 100.));
+            printf("%6d. blok:  %d%% prihvacenih,  Eb = %10.2e\n", NbEff, itmp, StE / Nt);
         }
-        itmp = (int)(round(ratio * 100.));
-        printf("%6d. blok:  %d%% prihvacenih,  Eb = %10.2e\n", NbEff, itmp, StE / Nt);
     } // kraj petlje blokova
 
     AE = SbE / NbEff;

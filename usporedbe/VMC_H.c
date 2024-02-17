@@ -135,9 +135,9 @@ int main()
       SbE += StE / Nt;
       SbE2 += StE * StE / (Nt * Nt);
       fprintf(fout, "%7d%16.8e%16.8e\n", NbEff, StE / Nt, SbE / NbEff);
+      itmp = (int)(round(acc_ib * 100.));
+      printf("%6d. blok:  %d%% prihvacenih,  Eb = %10.2e\n", NbEff, itmp, StE / Nt);
     }
-    itmp = (int)(round(acc_ib * 100.));
-    printf("%6d. blok:  %d%% prihvacenih,  Eb = %10.2e\n", NbEff, itmp, StE / Nt);
   } // blokovi
   AE = SbE / NbEff;
   sigmaE = sqrt((SbE2 / NbEff - AE * AE) / (NbEff - 1.));
