@@ -1,5 +1,0 @@
-
-// Za referencu dijelim primjer za VMC
-// - fortran kod VMC.f (3 čestice, m = 4u, ε = 12 K, σ = 4 Å)
-// - postavke (*.ini) i rezultati (*.dat) u podmapi .\4.4.4\VMC_s4_e12_ags1\
-// - primjerice za parametre α = 4.55 Å,  γ = 4.77, s = 0.3 Å-1 energija je oko 5 K
