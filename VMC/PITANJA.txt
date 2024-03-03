@@ -1,0 +1,10 @@
+1. Zašto divlja za veći broj koraka/blokova?
+2. izgleda da je T najčešće vrlo blizu oko 1, i zato je velika većina koraka prihvaćena - je li to očekivano?
+3. je li trebalo resetirat countere accepted/rejected unutar svakog bloka?
+4. Trebam li neke rubne uvjete kako bi stvari ostale unutar početnih granica?
+5. Je li mi normalna veličina max. koraka koju dobijem na kraju simulacije? 3.62e+01? (na razini originalne kutije)
+6. Dobivena energija za 100;100;250 ~  E = 9.98449e-02 +- 3.27e-02 - je li to normalno?
+7. Koji mi je varijacijski parametar?
+
+// TASKS
+- [ ] pokušat nacrtat distribucijsku funkciju kuteva? 

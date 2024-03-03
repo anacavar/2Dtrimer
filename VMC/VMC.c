@@ -83,8 +83,8 @@ int main(void)
 
     SbE = 0.;
     SbE2 = 0;
-    for (ib = 1; ib <= Nb; ib++)
-    { // blokovi
+    for (ib = 1; ib <= Nb; ib++) // po blokovima
+    {
         StE = 0;
         NbEff = ib - NbSkip;
         // resetirat accepted, rejected ovdje?
