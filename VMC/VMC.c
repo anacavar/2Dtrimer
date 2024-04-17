@@ -1,5 +1,4 @@
 // Varijacijski Monte Carlo
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -31,9 +30,9 @@
 
 // deklaracija funkcija
 double Psi(double);                                                                     // probna valna funkcija (korelacijska funkcija)
+double U_LJ(double);                                                                    // Lennard-Jonesov potencijal
 double E_kin_L(double, double, double, double, double, double, double, double, double); // kinetički dio lokalne energije
 double E_pot_L(double, double, double);                                                 // potencijalni dio lokalne energije
-double U_LJ(double);
 double f_ddr(double), f_dr(double);
 
 // OČEKIVANA ENERGIJA BI TREBALA BITI OKO 5 KELVINA
@@ -58,7 +57,7 @@ int main(void)
     double SwE;        // = suma(srednjih E) po setacima
     double StE;        // = suma (srednjih E) po koracima
     double SbE;        // = suma (srednjih E) po blokovima
-    double SbE2;       // = suma (srednjih E) po blokovima
+    double SbE2;       // = suma (srednjih E^2) po blokovima
     double AE, sigmaE; // srednja vrijednost i standardna devijacija
     int NbEff;         // efektivni indeks bloka
     int itmp;          // postotak prihvaćanja
@@ -200,7 +199,6 @@ double E_pot_L(double r12, double r13, double r23)
 
 double U_LJ(double r)
 {
-
     return 4 * epsilon * (pow((sigma / r), 12) - pow((sigma / r), 6));
 }
 
