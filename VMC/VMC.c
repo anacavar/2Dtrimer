@@ -14,7 +14,7 @@
 #define u 1.                                           // jedinica mase
 #define u_si 1.6605 * pow(10, -27)                     // kg
 #define hbar2 4.851159708 * 10 * k_B *K *pow(A, 2) * u // (reducirana planckova konstanta)^2
-#define hbar2_si 1.112121717 * pow(10, −68)            // (Js)^2 = (m2kg/s)^2
+#define hbar2_si 1.112121717 * pow(10, -68)            // (Js)^2 = (m2kg/s)^2
 // početne vrijednosti
 #define Nt 100              // broj koraka
 #define Nw 100              // broj šetača

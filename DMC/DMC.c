@@ -1,6 +1,7 @@
 // Difuzijski Monte Carlo
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <math.h>
 #include "ran1.c"
 #include "gasdev.c"
@@ -15,12 +16,17 @@
 #define u 1.                                           // jedinica mase
 #define u_si 1.6605 * pow(10, -27)                     // kg
 #define hbar2 4.851159708 * 10 * k_B *K *pow(A, 2) * u // (reducirana planckova konstanta)^2
-#define hbar2_si 1.112121717 * pow(10, −68)            // (Js)^2 = (m2kg/s)^2
+#define hbar2_si 1.112121717 * pow(10, -68)            // (Js)^2 = (m2kg/s)^2
 
 // POČETNE VRIJEDNOSTI
-#define Nt 100              // broj koraka
-#define Nw 100              // broj šetača - al brijem da ovo mora bit fluidno, je li Pero reko oko +/- 30%?
-#define Nb 250              // broj blokova
+// #define Nt 100                    // broj koraka
+#define Nt 10 // broj koraka
+// #define Nw0 100                   // početni broj šetača
+#define Nw0 10 // početni broj šetača
+// #define Nw (int)(1.3 * Nw0) // broj šetača
+#define Nw (int)(2.3 * Nw0) // broj šetača
+// #define Nb 250              // broj blokova
+#define Nb 1                // broj blokova
 #define NbSkip 0            // broj prvih blokova koje preskačemo
 #define sigma 4 * A         // angstrema
 #define epsilon 12 * k_B *K // dubina jame, u kelvinima preko boltzmannove konstante
@@ -33,7 +39,7 @@
 #define dtau 1.0            // korak vremena ∆τ (čega? u čemu su ove imaginarne jedinice? ni u čemu? veli pero 10 na minus šestu miliKelvina na minus prvu)
 
 // deklaracija funkcija
-double Psi(double);                                                                     // probna valna funkcija (korelacijska funkcija)
+// double Psi(double);                                                                     // probna valna funkcija (korelacijska funkcija)
 double U_LJ(double);                                                                    // Lennard-Jonesov potencijal
 double E_kin_L(double, double, double, double, double, double, double, double, double); // kinetički dio lokalne energije
 double E_pot_L(double, double, double);                                                 // potencijalni dio lokalne energije
@@ -43,39 +49,36 @@ int main(void)
 {
 #pragma region // VARIJABLE
   long idum = -1234;
-  int ib, it, iw, k, l;                      // indeks bloka, indeks koraka, indeks šetača, indeks čestice
-  double x[4][Nw + 1], y[4][Nw + 1];         // indeks čestice, indeks šetača - bar 20% više od referentnog broja šetača
-  double x_pww[4][Nw + 1], y_pww[4][Nw + 1]; // indeks čestice, indeks šetača
-  double r12, r23, r13;                      // udaljenosti između čestica
-  double P[Nw + 1];                          // vjerojatnost prijelaza Ri -> Rf za svakog šetača posebno
-  double dx, dy;                             // promjene koordinata čestica
-  double dxyMax = L0 / 100;                  // maksimalne promjene x,y,z koordinata
-  double gauss_total[Nw + 1];                // ukupna Gaussova distribucija (za svakog šetača posebno?)
-  double psi_total;                          // ukupna probna valna funkcija (za svakog šetača posebno?)
-  double sigma2 = hbar2 / mass * dtau;       // varijanca
-  // double Fq_x[4][Nw + 1], Fq_y[4][Nw + 1]; // x i y komponente driftne (kvantne) sile
-  double Fq_x_prime[4], Fq_y_prime[4]; // x i y komponente driftne (kvantne) sile
-  double Fqa_x[4], Fqa_y[4];           // privremena driftna sila međukoraka a u x i y smjeru (Fqa)
-  double Fqb_x[4], Fqb_y[4];           // privremena driftna sila međukoraka b u x i y smjeru (Fqb)
-  double x_a[4], y_a[4];               // privremena koordinata međukoraka a svake čestice u x i y smjeru (R_a^m)
-  double x_b[4], y_b[4];               // privremena koordinata međukoraka b svake čestice u x i y smjeru (R_a^m)
-  double x_pw_prime[4], y_pw_prime[4]; // srednji driftni pomak
-  double E_L[Nw + 1];                  // lokalna energija zadnjeg koraka svakog od šetača
-  double E_L_prime;                    // lokalna energija trenutnog koraka - placeholder za novu energiju
-  double E_R;                          // energija R koja se mijenja u svkakom koraku (za svakog šetača??)
-  double W_Rpw;                        // statistička težina
-  int n_w[Nw];                         // broj potomaka - jel ovo treba bit polje baš? Možda da da znam kasnije za kolko umnožit walkere...
-  double SwE;                          // = suma(srednjih E) po setacima
-  double StE;                          // = suma (srednjih E) po koracima
-  double SbE;                          // = suma (srednjih E) po blokovima
-  double SbE2;                         // = suma (srednjih E^2) po blokovima
-  int NbEff;                           // efektivni indeks bloka
+  int ib, it, iw, k, l, indeks;                // indeks bloka, indeks koraka, indeks šetača, indeks čestice
+  double x[4][Nw + 1], y[4][Nw + 1];           // indeks čestice, indeks šetača - bar 20% više od referentnog broja šetača
+  double x_temp[4][Nw + 1], y_temp[4][Nw + 1]; // temporary lista
+  double r12, r23, r13;                        // udaljenosti između čestica
+  double dx, dy;                               // promjene koordinata čestica
+  double sigma2 = hbar2 / mass * dtau;         // varijanca
+  double Fq_x_prime[4], Fq_y_prime[4];         // x i y komponente driftne (kvantne) sile
+  double Fqa_x[4], Fqa_y[4];                   // privremena driftna sila međukoraka a u x i y smjeru (Fqa)
+  double Fqb_x[4], Fqb_y[4];                   // privremena driftna sila međukoraka b u x i y smjeru (Fqb)
+  double x_a[4], y_a[4];                       // privremena koordinata međukoraka a svake čestice u x i y smjeru (R_a^m)
+  double x_b[4], y_b[4];                       // privremena koordinata međukoraka b svake čestice u x i y smjeru (R_a^m)
+  double x_pw_prime[4], y_pw_prime[4];         // srednji driftni pomak
+  double E_L[Nw + 1];                          // lokalna energija zadnjeg koraka svakog od šetača
+  double E_L_temp[Nw + 1];                     // temporary lista
+  double E_L_prime;                            // lokalna energija trenutnog koraka - placeholder za novu energiju
+  double E_R;                                  // energija R koja se mijenja u svkakom koraku (za svakog šetača??)
+  double W_Rpw;                                // statistička težina
+  int n_w[Nw];                                 // broj potomaka
+  int n_w_temp[Nw];                            // temporary lista broja potomaka
+  double SwE;                                  // = suma(srednjih E) po setacima
+  double StE;                                  // = suma (srednjih E) po koracima
+  double SbE;                                  // = suma (srednjih E) po blokovima
+  double SbE2;                                 // = suma (srednjih E^2) po blokovima
+  int NbEff;                                   // efektivni indeks bloka
 #pragma endregion
 
   FILE *data;
   data = fopen("data.txt", "w");
 
-  // inicijalizacija koordinata čestica gdje je gustoća Psi*Psi znacajna
+  // inicijalizacija koordinata čestica prema gaussovoj raspodjeli
   for (iw = 1; iw <= Nw; iw++) // po šetačima
   {
     for (k = 1; k <= 3; k++) // po česticama
@@ -83,14 +86,12 @@ int main(void)
       x[k][iw] = (2 * ran1(&idum) - 1) * L0;
       y[k][iw] = (2 * ran1(&idum) - 1) * L0;
     }
-    r12 = sqrt(pow((x[1][iw] - x[2][iw]), 2) + pow((y[1][iw] - y[2][iw]), 2));
-    r23 = sqrt(pow((x[2][iw] - x[3][iw]), 2) + pow((y[2][iw] - y[3][iw]), 2));
-    r13 = sqrt(pow((x[1][iw] - x[3][iw]), 2) + pow((y[1][iw] - y[3][iw]), 2));
-    P[iw] = Psi(r12) * Psi(r23) * Psi(r13);
+    E_L[iw] = E_trial; // na koju početnu vrijednost postavljam E_L?
   }
 
   SbE = 0.;
   SbE2 = 0;
+  E_R = E_trial;               // na koju početnu vrijednost postavljam E_R? Na E_trial?
   for (ib = 1; ib <= Nb; ib++) // po blokovima
   {
     StE = 0;
@@ -169,42 +170,55 @@ int main(void)
             }
           }
         }
-        // i lokalne energije:
+        // i lokalne energije (kinetički + potencijalni dio):
         r12 = sqrt(pow((x_pw_prime[2] - x_pw_prime[1]), 2) + pow((y_pw_prime[2] - y_pw_prime[1]), 2));
         r23 = sqrt(pow((x_pw_prime[3] - x_pw_prime[2]), 2) + pow((y_pw_prime[3] - y_pw_prime[2]), 2));
         r13 = sqrt(pow((x_pw_prime[3] - x_pw_prime[1]), 2) + pow((y_pw_prime[3] - y_pw_prime[1]), 2));
-        // lokalna energija = kinetički + potencijalni dio
-        // PRIME JE SAMO KAO, OZNAKA ZA NOVU VRIJEDNOST U OVOM KORAKU, A KASNIJE SE PREPIŠE U E_L
         E_L_prime = E_kin_L(r12, r13, r23, x_pw_prime[1], x_pw_prime[2], x_pw_prime[3], y_pw_prime[1], y_pw_prime[2], y_pw_prime[3]) + E_pot_L(r12, r13, r23);
-
         // korak 7. - konačni driftni pomak
         for (k = 1; k <= 3; k++) // po česticama
         {
           x[k][iw] = x_a[k] + (hbar2 / (2 * mass)) * dtau * Fq_x_prime[k];
           y[k][iw] = y_a[k] + (hbar2 / (2 * mass)) * dtau * Fq_y_prime[k];
         }
-        // korak 8. - određivanje statističke težine W(R'_p(w))
-        // E_L bez crtanog je iz prošlog koraka (stara energija), E_L' je iz trenutnog koraka (nova energija)
-        W_Rpw = exp(-(1 / 2 * (E_L[iw] + E_L_prime) - E_R) * dtau); // E_R ovdje još nisam pridala vrijednost!!! mislim da je to neki average...
+        // korak 8. - određivanje statističke težine W(R'_p(w)) - (E_L bez crtanog je iz prošlog koraka (stara energija), E_L' je iz trenutnog koraka (nova energija))
+        W_Rpw = exp(-(1 / 2 * (E_L[iw] + E_L_prime) - E_R) * dtau);                      // E_R ovdje je neki average koji se mijenja kroz simulaciju...
+        printf("E_L[%d] = %f, E_L_prime = %f, E_R =%f \n", iw, E_L[iw], E_L_prime, E_R); // ovaj E_L_prime ispadne puno drukčiji od pp E_L i E_R, na koje vrijednosti njih narihtavam?
         // korak 9. - stohastička procjena broja potomaka
         n_w[iw] = (int)(W_Rpw + ran1(&idum));
-        // kako se točno kopiraju ovi šetači u nove? Valjda nakon petlje šetača se sve umnoži according to nw[iw]...
-
-        // i brijem da sad spremim energiju... jel se ovo ikad odbacuje, il?
+        printf("korak=%d, n_w[%d] = %d\n", it, iw, n_w[iw]);
         E_L[iw] = E_L_prime;
         SwE = SwE + E_L[iw];
-        // a što je s E_R? to je neki prosjek brijem? prosjek energije čega... svega? svih šetača? ili samo ovog šetača? stavila da je StE/Nt
       } // kraj petlje šetača
       // korak 10. - akumulacija lokalnih energija nakon stabilizacije (za svaki korak)
       if (ib > NbSkip)
       {
         StE += SwE / Nw;
       }
-      // mislim da je E_R u biti StE/Nt ?
-      E_R = StE / Nt;
+      E_R = StE / Nt; // double check
       // korak 11. - kopiranje potomaka R'_p(w) u novi ansambl
-      // gdje ovo ide?? valjda na kraj ili na početak petlje koraka...
-      // TODO za smislit :)
+      memcpy(x_temp, x, sizeof(x));
+      memcpy(y_temp, y, sizeof(y));
+      memcpy(E_L_temp, E_L, sizeof(E_L));
+      memcpy(n_w_temp, n_w, sizeof(n_w));
+      indeks = 1;
+      // for (iw = 1; iw <= sizeof(x_temp); iw++) // možda mi ovdje veličina liste eksplodira... pa zato puca pri pokretanju
+      // {
+      //   if (n_w_temp[iw] != 0) // ako je n = 0 onda taj šetač biva uništen (preskačemo ga)
+      //   {
+      //     for (int in = 0; in <= n_w_temp[iw]; in++)
+      //     {
+      //       for (k = 1; k <= 3; k++)
+      //       {
+      //         x[k][indeks + in] = x_temp[k][iw];
+      //         y[k][indeks + in] = y_temp[k][iw];
+      //       }
+      //       E_L[indeks + in] = E_L_temp[iw];
+      //       n_w[indeks + in] = n_w_temp[iw];
+      //     }
+      //     indeks += n_w_temp[iw] + 1;
+      //   }
+      // }
     } // kraj petlje koraka
     if (ib > NbSkip)
     {
@@ -218,11 +232,11 @@ int main(void)
   return 0;
 }
 
-// probna valna funkcija
-double Psi(double r)
-{
-  return exp(-pow(alpha / r, gamma) - s * r) / sqrt(r);
-}
+// // probna valna funkcija
+// double Psi(double r)
+// {
+//   return exp(-pow(alpha / r, gamma) - s * r) / sqrt(r);
+// }
 
 double f_dr(double r)
 {
