@@ -18,8 +18,11 @@
 // početne vrijednosti
 #define Nt 100              // broj koraka
 #define Nw 100              // broj šetača
-#define Nb 250              // broj blokova
-#define NbSkip 0            // broj prvih blokova koje preskačemo
+#define Nb 300              // broj blokova
+#define N_r12_dist 100      // broj binova za distribuciju r12
+#define N_r12_r13_dist 100  // broj binova za distribuciju r12 i r13
+#define N_angles_dist 100   // broj binova za distribuciju kuteva
+#define NbSkip 100          // broj prvih blokova koje preskačemo
 #define sigma 4 * A         // angstrema
 #define epsilon 12 * k_B *K // dubina jame, u kelvinima preko boltzmannove konstante
 #define L0 30. * A          // angstrema
@@ -35,12 +38,12 @@ double E_kin_L(double, double, double, double, double, double, double, double, d
 double E_pot_L(double, double, double);                                                 // potencijalni dio lokalne energije
 double f_ddr(double), f_dr(double);
 
-// OČEKIVANA ENERGIJA BI TREBALA BITI OKO 5 KELVINA
+// OČEKIVANA ENERGIJA BI TREBALA BITI OKO 5 KELVINA (mili?)
 int main(void)
 {
 #pragma region // VARIJABLE
     long idum = -1234;
-    int ib, it, iw, k;
+    int i, ib, it, iw, k;
     double x[4][Nw + 1], y[4][Nw + 1]; // indeks čestice, indeks šetača
     double x_old[4], y_old[4];
     double dx, dy;            // promjene koordinata čestica
@@ -54,17 +57,25 @@ int main(void)
     double T;                      // vjerojatnost prijelaza Ri -> Rf
     int accepted = 0, rejected = 0;
     double ratio;
-    double SwE;        // = suma(srednjih E) po setacima
-    double StE;        // = suma (srednjih E) po koracima
-    double SbE;        // = suma (srednjih E) po blokovima
-    double SbE2;       // = suma (srednjih E^2) po blokovima
-    double AE, sigmaE; // srednja vrijednost i standardna devijacija
-    int NbEff;         // efektivni indeks bloka
-    int itmp;          // postotak prihvaćanja
+    double SwE;                                                      // = suma(srednjih E) po setacima
+    double StE;                                                      // = suma (srednjih E) po koracima
+    double SbE;                                                      // = suma (srednjih E) po blokovima
+    double SbE2;                                                     // = suma (srednjih E^2) po blokovima
+    double AE, sigmaE;                                               // srednja vrijednost i standardna devijacija
+    int NbEff;                                                       // efektivni indeks bloka
+    int itmp;                                                        // postotak prihvaćanja
+    double angle;                                                    // kut između r12 i r13 trimera (za svakog šetača posebno)
+    double r12_dist[N_r12_dist + 1], angles_dist[N_angles_dist + 1]; // distribucija duljina r12 i kuteva
+    double r12_r13_dist[N_r12_r13_dist + 1][N_r12_r13_dist + 1];     // distribucija duljina r12 i r13
+    double max_r12 = 100, max_r13 = 100, max_angle = 3.14;           // max_angle je pi, koje su dobre vrijednosti max_r12 i max_r13?
+    int n, m;                                                        // indeksi za distribucije
 #pragma endregion
 
-    FILE *data;
+    FILE *data, *data_angles, *data_r12, *data_r12_r13;
     data = fopen("data.txt", "w");
+    data_angles = fopen("data_angles.txt", "w");
+    data_r12 = fopen("data_r12.txt", "w");
+    data_r12_r13 = fopen("data_r12_r13.txt", "w");
 
     // inicijalizacija koordinata čestica gdje je gustoća Psi*Psi znacajna
     for (iw = 1; iw <= Nw; iw++) // po šetačima
@@ -86,7 +97,6 @@ int main(void)
     {
         StE = 0;
         NbEff = ib - NbSkip;
-        // resetirat accepted, rejected ovdje?
         accepted = 0;
         rejected = 0;
         for (it = 1; it <= Nt; it++) // po koracima
@@ -150,6 +160,21 @@ int main(void)
                 y3 = y[3][iw];
                 E_L[iw] = E_kin_L(r12, r13, r23, x1, x2, x3, y1, y2, y3) + E_pot_L(r12, r13, r23); // kinetički dio + potencijalni dio
                 SwE = SwE + E_L[iw];
+
+                // ubacujemo svakog šetača u svakom koraku u distribucije ako je simulacija stabilizirana (NbSkip blokova preskočeno)
+                if (ib > NbSkip)
+                {
+                    n = (int)(r12 / max_r12 * 100); // puca jer ih nema tolko unutra u polju - podijelit s nekim reasonable brojem, mislim, i ako je veće od toga valjda se sam zanemari..
+                    if (n <= N_r12_dist)
+                        r12_dist[n]++;
+                    m = (int)(r13 / max_r13 * 100);
+                    if (n <= N_r12_r13_dist && m <= N_r12_r13_dist)
+                        r12_r13_dist[n][m]++;
+                    angle = acos((r23 * r23 - r12 * r12 - r13 * r13) / (-2 * r12 * r13));
+                    n = (int)(angle / max_angle * 100); // podijelit tipa s pi mislim
+                    if (n <= N_angles_dist)
+                        angles_dist[n]++;
+                }
             } // kraj petlje šetača
             // akumulacija podataka nakon stabilizacije
             if (ib > NbSkip)
@@ -159,14 +184,11 @@ int main(void)
         } // kraj petlje koraka
         // nakon svakog bloka podeđavamo maksimalnu duljinu koraka kako bi prihvaćanje bilo oko 50%
         ratio = (double)accepted / (double)(accepted + rejected);
-        // printf("Prihvacenih: %d\nOdbijenih: %d\nOmjer: %f\n", accepted, rejected, ratio);
 
         if (ratio > 0.5)
             dxyMax = dxyMax * 1.05;
         if (ratio < 0.5)
             dxyMax = dxyMax * 0.95;
-
-        // printf("dxyMax = %f\n", dxyMax);
 
         if (ib > NbSkip)
         {
@@ -178,11 +200,32 @@ int main(void)
         }
     } // kraj petlje blokova
 
+    for (i = 1; i <= N_r12_dist; i++) // po binovima raspodjele r12
+    {
+        fprintf(data_r12, "%f\t%f\t\n", (double)i * max_r12 / 100.0, r12_dist[i]);
+    }
+
+    for (i = 1; i <= N_angles_dist; i++) // po binovima raspodjele kutova
+    {
+        fprintf(data_angles, "%f\t%f\t\n", (double)i * max_angle / 100, angles_dist[i]);
+    }
+
+    for (i = 1; i <= N_r12_r13_dist; i++) // po binovima raspodjele r12 i r13
+    {
+        for (k = 1; k <= N_r12_r13_dist; k++)
+        {
+            fprintf(data_r12_r13, "%f\t%f\t%f\n", (double)i * max_r12 / 100, (double)k * max_r13 / 100, r12_r13_dist[i][k]);
+        }
+    }
+
     AE = SbE / NbEff;
     sigmaE = sqrt((SbE2 / NbEff - AE * AE) / (NbEff - 1.));
     printf("\n konacni max. korak: %6.2e\n", dxyMax);
     printf("\n E = %8.5e +- %6.2e \n\n", AE, sigmaE);
     fclose(data);
+    fclose(data_angles);
+    fclose(data_r12);
+    fclose(data_r12_r13);
     return 0;
 }
 
