@@ -46,11 +46,9 @@ int main(void)
 {
 #pragma region // VARIJABLE
   long idum = -1234;
-  int ib, it, iw, k, l, indeks; // indeks bloka, indeks koraka, indeks šetača, indeks čestice
-  int Nw = Nw0;                 // broj šetača
-  // double x[4][(int)1.3 * Nw0 + 1], y[4][(int)1.3 * Nw0 + 1];           // indeks čestice, indeks šetača - bar 20% više od referentnog broja šetača
-  double x[4][Nw_start], y[4][Nw_start]; // indeks čestice, indeks šetača - bar 20% više od referentnog broja šetača
-  // double x_temp[4][(int)1.3 * Nw0 + 1], y_temp[4][(int)1.3 * Nw0 + 1]; // temporary lista
+  int ib, it, iw, k, l, indeks;                    // indeks bloka, indeks koraka, indeks šetača, indeks čestice
+  int Nw = Nw0;                                    // broj šetača
+  double x[4][Nw_start], y[4][Nw_start];           // indeks čestice, indeks šetača - bar 20% više od referentnog broja šetača
   double x_temp[4][Nw_start], y_temp[4][Nw_start]; // temporary lista
   double r12, r23, r13;                            // udaljenosti između čestica
   double dx, dy;                                   // promjene koordinata čestica
@@ -61,23 +59,20 @@ int main(void)
   double x_a[4], y_a[4];                           // privremena koordinata međukoraka a svake čestice u x i y smjeru (R_a^m)
   double x_b[4], y_b[4];                           // privremena koordinata međukoraka b svake čestice u x i y smjeru (R_a^m)
   double x_pw_prime[4], y_pw_prime[4];             // srednji driftni pomak
-  // double E_L[(int)1.3 * Nw0 + 1];                                      // lokalna energija zadnjeg koraka svakog od šetača
-  double E_L[Nw_start]; // lokalna energija zadnjeg koraka svakog od šetača
-  // double E_L_temp[(int)1.3 * Nw0 + 1]; // temporary lista
-  double E_L_temp[Nw_start]; // temporary lista
-  double E_L_prime;          // lokalna energija trenutnog koraka - placeholder za novu energiju
-  double E_R;                // energija R koja se mijenja u svkakom koraku (za svakog šetača??)
-  double W_Rpw;              // statistička težina
-  // int n_w[(int)1.3 * Nw0 + 1];         // broj potomaka
-  int n_w[Nw_start]; // broj potomaka
-  int sum_nw;        // suma potomaka nastalih tijekom jednog koraka
-  // int n_w_temp[(int)1.3 * Nw0 + 1];    // temporary lista broja potomaka
-  int n_w_temp[Nw_start]; // temporary lista broja potomaka
-  double SwE;             // = suma(srednjih E) po setacima
-  double StE;             // = suma (srednjih E) po koracima
-  double SbE;             // = suma (srednjih E) po blokovima
-  double SbE2;            // = suma (srednjih E^2) po blokovima
-  int NbEff;              // efektivni indeks bloka
+  double E_L[Nw_start];                            // lokalna energija zadnjeg koraka svakog od šetača
+  double E_L_temp[Nw_start];                       // temporary lista
+  double E_L_prime;                                // lokalna energija trenutnog koraka - placeholder za novu energiju
+  double E_R;                                      // energija R koja se mijenja u svkakom koraku (za svakog šetača??)
+  double W_Rpw;                                    // statistička težina
+  int n_w[Nw_start];                               // broj potomaka
+  int sum_nw;                                      // suma potomaka nastalih tijekom jednog koraka
+  int n_w_temp[Nw_start];                          // temporary lista broja potomaka
+  double SwE;                                      // = suma(srednjih E) po setacima
+  double StE;                                      // = suma (srednjih E) po koracima
+  double SbE;                                      // = suma (srednjih E) po blokovima
+  double SbE2;                                     // = suma (srednjih E^2) po blokovima
+  int NbEff;                                       // efektivni indeks bloka
+  int Nw_temp;                                     // temporary broj setaca
 #pragma endregion
 
   FILE *data;
@@ -113,9 +108,10 @@ int main(void)
       SwE = 0;
       sum_nw = 0;
       // u svakom koraku ažuriram broj šetača
-      printf("Nw = %d\n", Nw);
+      // printf("Nw = %d\n", Nw);
       for (iw = 1; iw <= Nw; iw++) // po šetačima
       {
+        // printf("Nw = %d, iw = %d\n", Nw, iw);
         // korak 1. - gaussov pomak (Ra)
         for (k = 1; k <= 3; k++) // po česticama
         {
@@ -197,14 +193,16 @@ int main(void)
         }
         // korak 8. - određivanje statističke težine W(R'_p(w)) - (E_L bez crtanog je iz prošlog koraka (stara energija), E_L' je iz trenutnog koraka (nova energija))
         W_Rpw = exp(-(1 / 2 * (E_L[iw] + E_L_prime) - E_R) * dtau); // E_R ovdje je neki average koji se mijenja kroz simulaciju...
-        printf("E_L[%d] = %f, E_L_prime = %f, E_R =%f \n", iw, E_L[iw], E_L_prime, E_R);
+        // printf("E_L[%d] = %f, E_L_prime = %f, E_R =%f \n", iw, E_L[iw], E_L_prime, E_R);
         // korak 9. - stohastička procjena broja potomaka
         n_w[iw] = (int)(W_Rpw + ran1(&idum)); // trebalo bi uvest optimizaciju koja bi se riješila nekih od ovih šetača
         sum_nw += n_w[iw] - 1;
-        printf("korak=%d,, W_Rpw=%f, n_w[%d] = %d\n", it, W_Rpw, iw, n_w[iw]);
+        // printf("korak=%d, W_Rpw=%f, n_w[%d] = %d\n", it, W_Rpw, iw, n_w[iw]);
         E_L[iw] = E_L_prime;
         SwE = SwE + E_L[iw];
       } // kraj petlje šetača
+
+      printf("print, sum=%d\n", sum_nw);
 
       // sad trebam broj šetača porihtat da ne bježe iz liste...
       // trebali bi odrediti omjer n_w[iw](-1?) i slobodnih Nw
@@ -215,7 +213,9 @@ int main(void)
       {
         for (iw = 1; iw <= Nw; iw++)
         {
+          printf("n_w[%d] = %d,\t", iw, n_w[iw]);
           n_w[iw] = (int)n_w[iw] / sum_nw * (Nw_start - Nw); // n_w' / slobodno = n_w / suma
+          printf("n_w'[%d] = %d\n", iw, n_w[iw]);
         }
       }
 
@@ -230,27 +230,46 @@ int main(void)
       memcpy(y_temp, y, sizeof(y));
       memcpy(E_L_temp, E_L, sizeof(E_L));
       memcpy(n_w_temp, n_w, sizeof(n_w));
-      indeks = 1;
+      Nw_temp = Nw;
       Nw = 0;
-      for (iw = 1; iw <= sizeof(x_temp); iw++) // možda mi ovdje veličina liste eksplodira... pa zato puca pri pokretanju
+      indeks = 1;
+      // printf("Nw_temp = %d\n", Nw_temp);
+      for (iw = 1; iw <= Nw_temp; iw++)
       {
         if (n_w_temp[iw] != 0) // ako je n = 0 onda taj šetač biva uništen (preskačemo ga)
         {
-          for (int in = 0; in <= n_w_temp[iw]; in++)
+          // printf("n_w_temp[%d] = %d\n", iw, n_w_temp[iw]);
+          for (int in = 0; in < n_w_temp[iw]; in++)
           {
             for (k = 1; k <= 3; k++)
             {
               x[k][indeks + in] = x_temp[k][iw];
               y[k][indeks + in] = y_temp[k][iw];
             }
+            // printf("indeks(=%d) + in(=%d) = %d, Nw_temp = %d\n", indeks, in, indeks + in, Nw_temp);
             E_L[indeks + in] = E_L_temp[iw];
             n_w[indeks + in] = n_w_temp[iw];
           }
-          indeks += n_w_temp[iw] + 1;
         }
+        // else
+        // {
+        //   printf("n_w_temp[%d] = %d\n", iw, n_w_temp[iw]);
+        //   printf("indeks(=%d) + in(=0) = %d, Nw_temp = %d\n", indeks, indeks, Nw_temp);
+        // }
+        if (iw != Nw_temp) // ako nije zadnji korak
+        {
+          indeks += n_w_temp[iw];
+        }
+        else if (iw == Nw_temp && n_w_temp[iw] == 0)
+        {
+          indeks = indeks - 1;
+        }
+        // printf("indeks = %d\n", indeks);
       }
-      Nw = indeks; // double check jel ovo dobro?
-    }              // kraj petlje koraka
+      // printf("Nw = %d =? %d = indeks\n", Nw, indeks);
+      Nw = indeks; // brijem ide -1 jer kao ne trebam se dalje pomaknut od zadnjeg indeksa
+      // printf("Nw_new = %d\n", Nw);
+    } //  petlje koraka
     if (ib > NbSkip)
     {
       SbE += StE / Nt;
