@@ -68,7 +68,8 @@ int main(void)
     double r12_dist[N_r12_dist + 1], angles_dist[N_angles_dist + 1]; // distribucija duljina r12 i kuteva
     double r12_r13_dist[N_r12_r13_dist + 1][N_r12_r13_dist + 1];     // distribucija duljina r12 i r13
     double max_r12 = 100, max_r13 = 100, max_angle = 3.14;           // max_angle je pi, koje su dobre vrijednosti max_r12 i max_r13?
-    int n, m;                                                        // indeksi za distribucije
+    // što ako stavim veći max_angle, recimo 2pi?
+    int n, m; // indeksi za distribucije
 #pragma endregion
 
     FILE *data, *data_angles, *data_r12, *data_r12_r13;
@@ -170,8 +171,8 @@ int main(void)
                     m = (int)(r13 / max_r13 * 100);
                     if (n <= N_r12_r13_dist && m <= N_r12_r13_dist)
                         r12_r13_dist[n][m]++;
-                    angle = acos((r23 * r23 - r12 * r12 - r13 * r13) / (-2 * r12 * r13));
-                    n = (int)(angle / max_angle * 100); // podijelit tipa s pi mislim
+                    angle = acos((r23 * r23 - r12 * r12 - r13 * r13) / (-2 * r12 * r13)); // double checkaj ovu formulu
+                    n = (int)(angle / max_angle * 100);                                   // podijelit tipa s pi mislim
                     if (n <= N_angles_dist)
                         angles_dist[n]++;
                 }

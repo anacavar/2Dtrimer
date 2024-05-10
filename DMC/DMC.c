@@ -20,11 +20,10 @@
 
 // POČETNE VRIJEDNOSTI
 // #define Nt 100                    // broj koraka
-#define Nt 10 // broj koraka
-// #define Nw0 100                   // početni broj šetača
+#define Nt 10                       // broj koraka
 #define Nw0 10                      // početni broj šetača
 #define Nw_start (int)1.3 * Nw0 + 1 // početna duljina liste
-#define Nb 1                        // broj blokova
+#define Nb 5                        // broj blokova
 #define NbSkip 0                    // broj prvih blokova koje preskačemo
 #define sigma 4 * A                 // angstrema
 #define epsilon 12 * k_B *K         // dubina jame, u kelvinima preko boltzmannove konstante
@@ -91,8 +90,8 @@ int main(void)
     r12 = sqrt(pow((x[2][iw] - x[1][iw]), 2) + pow((y[2][iw] - y[1][iw]), 2));
     r23 = sqrt(pow((x[3][iw] - x[2][iw]), 2) + pow((y[3][iw] - y[2][iw]), 2));
     r13 = sqrt(pow((x[3][iw] - x[1][iw]), 2) + pow((y[3][iw] - y[1][iw]), 2));
-    E_L[iw] = E_kin_L(r12, r13, r23, x[1][iw], x[2][iw], x[3][iw], y[1][iw], y[2][iw], y[3][iw]) + E_pot_L(r12, r13, r23);
-    // E_L[iw] = E_trial;
+    // E_L[iw] = E_kin_L(r12, r13, r23, x[1][iw], x[2][iw], x[3][iw], y[1][iw], y[2][iw], y[3][iw]) + E_pot_L(r12, r13, r23);
+    E_L[iw] = E_trial;
     SwE += E_L[iw];
   }
   E_R = SwE / Nw; // prosječna energija po šetačima
@@ -108,10 +107,9 @@ int main(void)
       SwE = 0;
       sum_nw = 0;
       // u svakom koraku ažuriram broj šetača
-      // printf("Nw = %d\n", Nw);
+      printf("Nw = %d\n", Nw);
       for (iw = 1; iw <= Nw; iw++) // po šetačima
       {
-        // printf("Nw = %d, iw = %d\n", Nw, iw);
         // korak 1. - gaussov pomak (Ra)
         for (k = 1; k <= 3; k++) // po česticama
         {
@@ -196,25 +194,22 @@ int main(void)
         // printf("E_L[%d] = %f, E_L_prime = %f, E_R =%f \n", iw, E_L[iw], E_L_prime, E_R);
         // korak 9. - stohastička procjena broja potomaka
         n_w[iw] = (int)(W_Rpw + ran1(&idum)); // trebalo bi uvest optimizaciju koja bi se riješila nekih od ovih šetača
+        // printf("n_w[%d] = %d\n", iw, n_w[iw]);
         sum_nw += n_w[iw] - 1;
-        // printf("korak=%d, W_Rpw=%f, n_w[%d] = %d\n", it, W_Rpw, iw, n_w[iw]);
         E_L[iw] = E_L_prime;
         SwE = SwE + E_L[iw];
       } // kraj petlje šetača
 
-      printf("print, sum=%d\n", sum_nw);
-
-      // sad trebam broj šetača porihtat da ne bježe iz liste...
-      // trebali bi odrediti omjer n_w[iw](-1?) i slobodnih Nw
-      // dakle broj puta za koji se svaki dodao (n_w[iw]-1) / Suma(svih puta za koji se svaki dodao) * broj slobodnih mjesta
-
+      // ############################################################## tu debugiram
+      printf("sum_nw=%d\n", sum_nw);
       // ako je suma dodanih šetača veća od preostalog slobodnog prostora u listi
       if (sum_nw > Nw_start - Nw)
       {
         for (iw = 1; iw <= Nw; iw++)
         {
           printf("n_w[%d] = %d,\t", iw, n_w[iw]);
-          n_w[iw] = (int)n_w[iw] / sum_nw * (Nw_start - Nw); // n_w' / slobodno = n_w / suma
+          // 1 + koliko ih se nadodalo (sum_nw je isto suma nadodanih, a ne ukupnih n[w])
+          n_w[iw] = 1 + (int)n_w[iw] / sum_nw * (Nw_start - Nw); // n_w' / slobodno = n_w / suma
           printf("n_w'[%d] = %d\n", iw, n_w[iw]);
         }
       }
@@ -225,50 +220,43 @@ int main(void)
         StE += SwE / Nw; // ali ovaj broj se mijenja?
       }
       E_R = StE / Nt; // double check
+
       // korak 11. - kopiranje potomaka R'_p(w) u novi ansambl
-      memcpy(x_temp, x, sizeof(x));
-      memcpy(y_temp, y, sizeof(y));
-      memcpy(E_L_temp, E_L, sizeof(E_L));
-      memcpy(n_w_temp, n_w, sizeof(n_w));
-      Nw_temp = Nw;
-      Nw = 0;
-      indeks = 1;
-      // printf("Nw_temp = %d\n", Nw_temp);
-      for (iw = 1; iw <= Nw_temp; iw++)
+      if (Nw > Nw0 / 10) // ako broj šetača nije pao ispod 10% početnog broja šetača
       {
-        if (n_w_temp[iw] != 0) // ako je n = 0 onda taj šetač biva uništen (preskačemo ga)
+        memcpy(x_temp, x, sizeof(x));
+        memcpy(y_temp, y, sizeof(y));
+        memcpy(E_L_temp, E_L, sizeof(E_L));
+        memcpy(n_w_temp, n_w, sizeof(n_w));
+        Nw_temp = Nw;
+        Nw = 0;
+        indeks = 1;
+        for (iw = 1; iw <= Nw_temp; iw++)
         {
-          // printf("n_w_temp[%d] = %d\n", iw, n_w_temp[iw]);
-          for (int in = 0; in < n_w_temp[iw]; in++)
+          if (n_w_temp[iw] != 0) // ako je n = 0 onda taj šetač biva uništen (preskačemo ga)
           {
-            for (k = 1; k <= 3; k++)
+            for (int in = 0; in < n_w_temp[iw]; in++)
             {
-              x[k][indeks + in] = x_temp[k][iw];
-              y[k][indeks + in] = y_temp[k][iw];
+              for (k = 1; k <= 3; k++)
+              {
+                x[k][indeks + in] = x_temp[k][iw];
+                y[k][indeks + in] = y_temp[k][iw];
+              }
+              E_L[indeks + in] = E_L_temp[iw];
+              n_w[indeks + in] = n_w_temp[iw];
             }
-            // printf("indeks(=%d) + in(=%d) = %d, Nw_temp = %d\n", indeks, in, indeks + in, Nw_temp);
-            E_L[indeks + in] = E_L_temp[iw];
-            n_w[indeks + in] = n_w_temp[iw];
+          }
+          if (iw != Nw_temp) // ako nije zadnji korak
+          {
+            indeks += n_w_temp[iw];
+          }
+          else if (iw == Nw_temp && n_w_temp[iw] == 0)
+          {
+            indeks = indeks - 1;
           }
         }
-        // else
-        // {
-        //   printf("n_w_temp[%d] = %d\n", iw, n_w_temp[iw]);
-        //   printf("indeks(=%d) + in(=0) = %d, Nw_temp = %d\n", indeks, indeks, Nw_temp);
-        // }
-        if (iw != Nw_temp) // ako nije zadnji korak
-        {
-          indeks += n_w_temp[iw];
-        }
-        else if (iw == Nw_temp && n_w_temp[iw] == 0)
-        {
-          indeks = indeks - 1;
-        }
-        // printf("indeks = %d\n", indeks);
+        Nw = indeks; // brijem ide -1 jer kao ne trebam se dalje pomaknut od zadnjeg indeksa
       }
-      // printf("Nw = %d =? %d = indeks\n", Nw, indeks);
-      Nw = indeks; // brijem ide -1 jer kao ne trebam se dalje pomaknut od zadnjeg indeksa
-      // printf("Nw_new = %d\n", Nw);
     } //  petlje koraka
     if (ib > NbSkip)
     {
