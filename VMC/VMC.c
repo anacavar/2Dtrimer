@@ -14,22 +14,29 @@
 #define u 1.                                           // jedinica mase
 #define u_si 1.6605 * pow(10, -27)                     // kg
 #define hbar2 4.851159708 * 10 * k_B *K *pow(A, 2) * u // (reducirana planckova konstanta)^2
-#define hbar2_si 1.112121717 * pow(10, -68)            // (Js)^2 = (m2kg/s)^2
+// double check odakle ti k_B
+#define hbar2_si 1.112121717 * pow(10, -68) // (Js)^2 = (m2kg/s)^2
 // početne vrijednosti
-#define Nt 100              // broj koraka
 #define Nw 100              // broj šetača
-#define Nb 300              // broj blokova
+#define Nt 1000             // broj koraka
+#define Nb 220              // broj blokova
 #define N_r12_dist 100      // broj binova za distribuciju r12
 #define N_r12_r13_dist 100  // broj binova za distribuciju r12 i r13
 #define N_angles_dist 100   // broj binova za distribuciju kuteva
-#define NbSkip 100          // broj prvih blokova koje preskačemo
+#define NbSkip 20           // broj prvih blokova koje preskačemo
 #define sigma 4 * A         // angstrema
 #define epsilon 12 * k_B *K // dubina jame, u kelvinima preko boltzmannove konstante
 #define L0 30. * A          // angstrema
-#define alpha 4.16 * A      // angstrema
-#define gamma 2.82          // eksponent u probnoj valnoj funkciji
-#define s 0.0027            // eksponent u probnoj valnoj funkciji
-#define mass 4. * u         // u
+// #define alpha 4.16 * A      // angstrema
+#define alpha 4.55 * A // angstrema
+#define gamma 4.77     // eksponent u probnoj valnoj funkciji
+#define s 0.3 / A      // eksponent u probnoj valnoj funkciji A^-1
+#define mass 4. * u    // u
+
+// OVU MASU BI TREBALO preračunat tako da konstanta h^2/2m ispadne u miliKelvinima
+// konstanta Ck1/2/3 mora ispast milikelvin * angstrem kvadrat
+// mi sa slike je reducirana masa
+// double check sve to, zaš imam onu boltzmannovu konstantu k_B u hbar2?
 
 // deklaracija funkcija
 double Psi(double);                                                                     // probna valna funkcija (korelacijska funkcija)
@@ -38,7 +45,7 @@ double E_kin_L(double, double, double, double, double, double, double, double, d
 double E_pot_L(double, double, double);                                                 // potencijalni dio lokalne energije
 double f_ddr(double), f_dr(double);
 
-// OČEKIVANA ENERGIJA BI TREBALA BITI OKO 5 KELVINA (mili?)
+// OČEKIVANA ENERGIJA BI TREBALA BITI OKO -5 KELVINA
 int main(void)
 {
 #pragma region // VARIJABLE
