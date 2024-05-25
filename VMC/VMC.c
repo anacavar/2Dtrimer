@@ -3,6 +3,9 @@
 #include <stdlib.h>
 #include <math.h>
 #include "ran1.c"
+#include "global_vars.h" /* Declaration made available here */
+
+// extern double alpha, gamma_var, s;
 
 // konstante u zadanim mjernim jedinicama i njihov preračun u SI
 #define k_B 1.                                         // boltzmannova konstanta
@@ -17,21 +20,20 @@
 // double check odakle ti k_B
 #define hbar2_si 1.112121717 * pow(10, -68) // (Js)^2 = (m2kg/s)^2
 // početne vrijednosti
-#define Nw 100              // broj šetača
-#define Nt 1000             // broj koraka
-#define Nb 220              // broj blokova
-#define N_r12_dist 100      // broj binova za distribuciju r12
-#define N_r12_r13_dist 100  // broj binova za distribuciju r12 i r13
-#define N_angles_dist 100   // broj binova za distribuciju kuteva
-#define NbSkip 20           // broj prvih blokova koje preskačemo
-#define sigma 4 * A         // angstrema
-#define epsilon 12 * k_B *K // dubina jame, u kelvinima preko boltzmannove konstante
-#define L0 30. * A          // angstrema
-// #define alpha 4.16 * A      // angstrema
-#define alpha 4.55 * A // angstrema
-#define gamma 4.77     // eksponent u probnoj valnoj funkciji
-#define s 0.3 / A      // eksponent u probnoj valnoj funkciji A^-1
-#define mass 4. * u    // u
+#define Nw 100                 // broj šetača
+#define Nt 1000                // broj koraka
+#define Nb 220                 // broj blokova
+#define N_r12_dist 100         // broj binova za distribuciju r12
+#define N_r12_r13_dist 100     // broj binova za distribuciju r12 i r13
+#define N_angles_dist 100      // broj binova za distribuciju kuteva
+#define NbSkip 20              // broj prvih blokova koje preskačemo
+#define sigma 4 * A            // angstrema
+#define epsilon 12 * k_B *K    // dubina jame, u kelvinima preko boltzmannove konstante
+#define L0 30. * A             // angstrema
+#define alpha_initial 4.55 * A // angstrema
+#define gamma_initial 4.77     // eksponent u probnoj valnoj funkciji
+#define s_initial 0.3 / A      // eksponent u probnoj valnoj funkciji A^-1
+#define mass 4. * u            // u
 
 // OVU MASU BI TREBALO preračunat tako da konstanta h^2/2m ispadne u miliKelvinima
 // konstanta Ck1/2/3 mora ispast milikelvin * angstrem kvadrat
@@ -46,7 +48,7 @@ double E_pot_L(double, double, double);                                         
 double f_ddr(double), f_dr(double);
 
 // OČEKIVANA ENERGIJA BI TREBALA BITI OKO -5 KELVINA
-int main(void)
+void VMC(double *E_return, double *sigmaE_return)
 {
 #pragma region // VARIJABLE
     long idum = -1234;
@@ -116,6 +118,7 @@ int main(void)
                 {
                     dx = (ran1(&idum) * 2 - 1) * dxyMax;
                     dy = (ran1(&idum) * 2 - 1) * dxyMax;
+                    // TREBAM LI OVDJE RUBNE UVJETE DA NE IZŠETAJU IZ KUTIJE?? MOŽDA SU ZATO KUTEVI VELIKI, JER SE NEKA ČESTICA ONAK POMAKNE U KS
                     x_old[k] = x[k][iw];
                     y_old[k] = y[k][iw];
                     x[k][iw] += dx;
@@ -129,12 +132,10 @@ int main(void)
                 r13 = sqrt(pow((x[1][iw] - x[3][iw]), 2) + pow((y[1][iw] - y[3][iw]), 2));
                 psi_final = Psi(r12) * Psi(r23) * Psi(r13);
                 T = psi_final * psi_final / (psi_initial * psi_initial);
-                // printf("Psi_initial: %f\tPsi_final: %f => T=psi_f**2/psi_i**2= %f\n", psi_initial, psi_final, T);
                 if (T > 1) // prihvaćamo pomak
                 {
                     accepted++;
                     P[iw] = psi_final;
-                    // printf("accepted, T: %f\n", T);
                 }
                 else
                 {
@@ -143,12 +144,10 @@ int main(void)
                     {
                         accepted++;
                         P[iw] = psi_final;
-                        // printf("accepted, T: %f\tRand: %f\n", T, random_number);
                     }
                     else // odbacujemo pomak
                     {
                         rejected++;
-                        // printf("rejected, T: %f\tRand: %f\n", T, random_number);
                         for (k = 1; k <= 3; k++) // po česticama
                         {
                             x[k][iw] = x_old[k];
@@ -204,7 +203,7 @@ int main(void)
             SbE2 += StE * StE / (Nt * Nt);
             fprintf(data, "%d\t%f\t%f\n", NbEff, StE / Nt, SbE / NbEff); // indeks bloka, srednji E po koracima (po jednom bloku), Srednji E po blokovima (od početka simulacije)
             itmp = (int)(round(ratio * 100.));
-            printf("%6d. blok:  %d%% prihvacenih,  Eb = %10.2e\n", NbEff, itmp, StE / Nt);
+            // printf("%6d. blok:  %d%% prihvacenih,  Eb = %10.2e\n", NbEff, itmp, StE / Nt);
         }
     } // kraj petlje blokova
 
@@ -228,19 +227,21 @@ int main(void)
 
     AE = SbE / NbEff;
     sigmaE = sqrt((SbE2 / NbEff - AE * AE) / (NbEff - 1.));
-    printf("\n konacni max. korak: %6.2e\n", dxyMax);
-    printf("\n E = %8.5e +- %6.2e \n\n", AE, sigmaE);
+    printf(" konacni max. korak: %6.2e\n", dxyMax);
+    printf(" alpha = %f, gamma = %f, s = %f\n", alpha, gamma_var, s);
+    printf(" E = %8.5e +- %6.2e \n\n", AE, sigmaE);
+    *E_return = AE;
+    *sigmaE_return = sigmaE;
     fclose(data);
     fclose(data_angles);
     fclose(data_r12);
     fclose(data_r12_r13);
-    return 0;
 }
 
 // probna valna funkcija
 double Psi(double r)
 {
-    return exp(-pow(alpha / r, gamma) - s * r) / sqrt(r);
+    return exp(-pow(alpha / r, gamma_var) - s * r) / sqrt(r);
 }
 
 double E_pot_L(double r12, double r13, double r23)
@@ -264,12 +265,12 @@ double E_kin_L(double r12, double r13, double r23, double x1, double x2, double 
 
 double f_dr(double r)
 {
-    double fdr = 1 / pow(r, 2) * (gamma * pow((alpha / r), gamma) - s * r - 1 / 2);
+    double fdr = 1 / pow(r, 2) * (gamma_var * pow((alpha / r), gamma_var) - s * r - 1 / 2);
     return fdr;
 }
 
 double f_ddr(double r)
 {
-    double fddr = -1 / pow(r, 2) * (pow(gamma, 2) * pow((alpha / r), gamma) + s * r);
+    double fddr = -1 / pow(r, 2) * (pow(gamma_var, 2) * pow((alpha / r), gamma_var) + s * r);
     return fddr;
 }
