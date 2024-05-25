@@ -10,7 +10,8 @@ int main()
   double ds;
   double da;
   double gamma_min = 4.5, gamma_max = 4.6;
-  double alpha_min = 4.7, alpha_max = 4.8;
+  double alpha_min = 4.54, alpha_max = 4.75;
+  // double alpha_min = 4.7, alpha_max = 4.8;
   double s_min = 0.2, s_max = 0.4;
   double E, sigmaE;
   int N = 5;

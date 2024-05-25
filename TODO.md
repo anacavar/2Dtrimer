@@ -6,8 +6,8 @@
 
 # DMC
 
-- [ ] zahendlaj eksplodiranje listi - jesam brijem
-- [ ] što kad mi šetači idu u 0? jednostavno previše nepovoljni parametri?
+- [x] zahendlaj eksplodiranje listi - jesam brijem
+- [x] što kad mi šetači idu u 0? jednostavno previše nepovoljni parametri? - brijem da sam zahendlala i ovo
 - [ ] također napravit razdiobe
 - [ ] treba li nekako prirodno zahendlat i donju stranu? ko što skaliram liste s gornje strane?
 
