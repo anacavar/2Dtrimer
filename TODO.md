@@ -1,6 +1,6 @@
 # VMC
 
-- [ ] Implementirati variranje parametara
+- [x] Implementirati variranje parametara
 - [x] Uopće napštimati parametre
 - [x] Zakaj mi energija nije negativna tj stanje nije vezano?
 
