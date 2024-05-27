@@ -1,0 +1,33 @@
+// #define Nb 100   // broj blokova
+// #define Nbskip 0 // broj blokova koje preskačemo radi stabilizacije
+
+// float lennardJones(float x1, float x2, float y1, float y2)
+// {
+//     float sigma = 1;   // 3.4 * 10^(-10) [m]
+//     float epsilon = 1; // 1.65 * 10^(-21) [J]
+//     float Ulj;
+//     float x = sigma / sqrt(pow((x2 - x1), 2) + pow((y2 - y1), 2)); // x = sigma/r
+//     x = pow(x, 6);                                                 // x = (sigma/r)**6
+//     Ulj = (pow(x, 2) - x);
+//     Ulj = 4 * epsilon * Ulj;
+//     return Ulj;
+// }
+
+// float potencijal(float x[3][Nw], float y[3][Nw], int i_w)
+// {
+//     float U = 0;
+//     for (int i = 0; i < 3; i++)
+//     {
+//         for (int j = i + 1; j < 3; j++)
+//         {
+//             U += lennardJones(x[i][i_w], x[j][i_w], y[i][i_w], y[j][i_w]);
+//         }
+//     }
+//     return U;
+// }
+
+
+
+// printf("r12: %f\tr23: %f\tr13: %f\n", r12, r23, r13);
+// printf("Psi(R12): %f\n", Psi(r12));
+// printf("Psi_initial: %f\tPsi_final: %f\n", psi_initial, psi_final);
