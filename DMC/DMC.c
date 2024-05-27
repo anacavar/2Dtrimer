@@ -19,21 +19,21 @@
 #define hbar2_si 1.112121717 * pow(10, -68)            // (Js)^2 = (m2kg/s)^2
 
 // POČETNE VRIJEDNOSTI
-// #define Nt 100                    // broj koraka
-#define Nt 10                       // broj koraka
-#define Nw0 10                      // početni broj šetača
-#define Nw_start (int)1.3 * Nw0 + 1 // početna duljina liste
-#define Nb 5                        // broj blokova
-#define NbSkip 0                    // broj prvih blokova koje preskačemo
-#define sigma 4 * A                 // angstrema
-#define epsilon 12 * k_B *K         // dubina jame, u kelvinima preko boltzmannove konstante
-#define L0 30. * A                  // angstrema
-#define alpha 4.16 * A              // angstrema
-#define gamma 2.82                  // eksponent u probnoj valnoj funkciji
-#define s 0.0027                    // eksponent u probnoj valnoj funkciji
-#define E_trial 5. * K              // kelvina - ENERGIJA (OČEKIVANO) DłOBIVENA IZ VMC ANSAMBLA (MENI DOĐE OKO 2 THO TRENUTNO)
-#define mass 4. * u                 // u
-#define dtau 1.0                    // korak vremena ∆τ (čega? u čemu su ove imaginarne jedinice? ni u čemu? veli pero 10 na minus šestu miliKelvina na minus prvu)
+#define Nt 100                                 // broj koraka
+#define Nw0 100                                // početni broj šetača
+#define percentage 0.3                         // +/- varijacije broja šetača
+#define Nw_max (int)(1 + percentage) * Nw0 + 1 // početna duljina liste
+#define Nb 220                                 // broj blokova
+#define NbSkip 20                              // broj prvih blokova koje preskačemo
+#define sigma 4 * A                            // angstrema
+#define epsilon 12 * k_B *K                    // dubina jame, u kelvinima preko boltzmannove konstante
+#define L0 30. * A                             // angstrema
+#define alpha 4.62 * A                         // angstrema
+#define gamma 4.77                             // eksponent u probnoj valnoj funkciji
+#define s 0.3 / A                              // eksponent u probnoj valnoj funkciji
+#define E_trial -5.32 * K                      // kelvina - ENERGIJA (OČEKIVANO) DłOBIVENA IZ VMC-a
+#define mass 4. * u                            // u
+#define dtau 1.0                               // korak vremena ∆τ (čega? u čemu su ove imaginarne jedinice? ni u čemu? veli pero 10 na minus šestu miliKelvina na minus prvu)
 
 // deklaracija funkcija
 double U_LJ(double);                                                                    // Lennard-Jonesov potencijal
@@ -41,41 +41,61 @@ double E_kin_L(double, double, double, double, double, double, double, double, d
 double E_pot_L(double, double, double);                                                 // potencijalni dio lokalne energije
 double f_ddr(double), f_dr(double);
 
+// Comparator function for sorting w_pairs structs by value
+int compare(const void *a, const void *b)
+{
+  return ((w_pairs *)a)->value - ((w_pairs *)b)->value;
+}
+
+typedef struct
+{
+  double value;
+  int index;
+} w_pairs;
+
 int main(void)
 {
 #pragma region // VARIJABLE
   long idum = -1234;
-  int ib, it, iw, k, l, indeks;                    // indeks bloka, indeks koraka, indeks šetača, indeks čestice
-  int Nw = Nw0;                                    // broj šetača
-  double x[4][Nw_start], y[4][Nw_start];           // indeks čestice, indeks šetača - bar 20% više od referentnog broja šetača
-  double x_temp[4][Nw_start], y_temp[4][Nw_start]; // temporary lista
-  double r12, r23, r13;                            // udaljenosti između čestica
-  double dx, dy;                                   // promjene koordinata čestica
-  double sigma2 = hbar2 / mass * dtau;             // varijanca
-  double Fq_x_prime[4], Fq_y_prime[4];             // x i y komponente driftne (kvantne) sile
-  double Fqa_x[4], Fqa_y[4];                       // privremena driftna sila međukoraka a u x i y smjeru (Fqa)
-  double Fqb_x[4], Fqb_y[4];                       // privremena driftna sila međukoraka b u x i y smjeru (Fqb)
-  double x_a[4], y_a[4];                           // privremena koordinata međukoraka a svake čestice u x i y smjeru (R_a^m)
-  double x_b[4], y_b[4];                           // privremena koordinata međukoraka b svake čestice u x i y smjeru (R_a^m)
-  double x_pw_prime[4], y_pw_prime[4];             // srednji driftni pomak
-  double E_L[Nw_start];                            // lokalna energija zadnjeg koraka svakog od šetača
-  double E_L_temp[Nw_start];                       // temporary lista
-  double E_L_prime;                                // lokalna energija trenutnog koraka - placeholder za novu energiju
-  double E_R;                                      // energija R koja se mijenja u svkakom koraku (za svakog šetača??)
-  double W_Rpw;                                    // statistička težina
-  int n_w[Nw_start];                               // broj potomaka
-  int sum_nw;                                      // suma potomaka nastalih tijekom jednog koraka
-  int n_w_temp[Nw_start];                          // temporary lista broja potomaka
-  double SwE;                                      // = suma(srednjih E) po setacima
-  double StE;                                      // = suma (srednjih E) po koracima
-  double SbE;                                      // = suma (srednjih E) po blokovima
-  double SbE2;                                     // = suma (srednjih E^2) po blokovima
-  int NbEff;                                       // efektivni indeks bloka
-  int Nw_temp;                                     // temporary broj setaca
+  int ib, it, iw, k, l, indeks;                // indeks bloka, indeks koraka, indeks šetača, indeks čestice
+  int Nw = Nw0;                                // broj šetača
+  double x[4][Nw_max], y[4][Nw_max];           // indeks čestice, indeks šetača - bar 20% više od referentnog broja šetača
+  double x_temp[4][Nw_max], y_temp[4][Nw_max]; // temporary lista
+  double r12, r23, r13;                        // udaljenosti između čestica
+  double dx, dy;                               // promjene koordinata čestica
+  double sigma2 = hbar2 / mass * dtau;         // varijanca
+  double Fq_x_prime[4], Fq_y_prime[4];         // x i y komponente driftne (kvantne) sile
+  double Fqa_x[4], Fqa_y[4];                   // privremena driftna sila međukoraka a u x i y smjeru (Fqa)
+  double Fqb_x[4], Fqb_y[4];                   // privremena driftna sila međukoraka b u x i y smjeru (Fqb)
+  double x_a[4], y_a[4];                       // privremena koordinata međukoraka a svake čestice u x i y smjeru (R_a^m)
+  double x_b[4], y_b[4];                       // privremena koordinata međukoraka b svake čestice u x i y smjeru (R_a^m)
+  double x_pw_prime[4], y_pw_prime[4];         // srednji driftni pomak
+  double E_L[Nw_max];                          // lokalna energija zadnjeg koraka svakog od šetača
+  double E_L_temp[Nw_max];                     // temporary lista
+  double E_L_prime;                            // lokalna energija trenutnog koraka - placeholder za novu energiju
+  double E_R;                                  // energija R koja se mijenja u svkakom koraku (za svakog šetača??)
+  w_pairs W_Rpw[Nw_max];                       // statistička težina
+  int n_w[Nw_max];                             // broj potomaka
+  int sum_nw;                                  // suma potomaka nastalih tijekom jednog koraka
+  int n_w_temp[Nw_max];                        // temporary lista broja potomaka
+  double SwE;                                  // = suma(srednjih E) po setacima
+  double StE;                                  // = suma (srednjih E) po koracima
+  double SbE;                                  // = suma (srednjih E) po blokovima
+  double SbE2;                                 // = suma (srednjih E^2) po blokovima
+  int NbEff;                                   // efektivni indeks bloka
+  int Nw_temp;                                 // temporary broj setaca
 #pragma endregion
 
   FILE *data;
   data = fopen("data.txt", "w");
+
+  // inicijalizacija liste radi kasnijeg sortiranja
+
+  for (int i = 0; i < Nw_max; i++)
+  {
+    W_Rpw[i].value = 1.;
+    W_Rpw[i].index = k;
+  }
 
   SwE = 0;
   // inicijalizacija koordinata čestica prema gaussovoj raspodjeli
@@ -190,28 +210,71 @@ int main(void)
           y[k][iw] = y_a[k] + (hbar2 / (2 * mass)) * dtau * Fq_y_prime[k];
         }
         // korak 8. - određivanje statističke težine W(R'_p(w)) - (E_L bez crtanog je iz prošlog koraka (stara energija), E_L' je iz trenutnog koraka (nova energija))
-        W_Rpw = exp(-(1 / 2 * (E_L[iw] + E_L_prime) - E_R) * dtau); // E_R ovdje je neki average koji se mijenja kroz simulaciju...
-        // printf("E_L[%d] = %f, E_L_prime = %f, E_R =%f \n", iw, E_L[iw], E_L_prime, E_R);
+        W_Rpw[iw].value = exp(-(1 / 2 * (E_L[iw] + E_L_prime) - E_R) * dtau); // E_R ovdje je neki average koji se mijenja kroz simulaciju...
+        W_Rpw[iw].index = iw;
         // korak 9. - stohastička procjena broja potomaka
-        n_w[iw] = (int)(W_Rpw + ran1(&idum)); // trebalo bi uvest optimizaciju koja bi se riješila nekih od ovih šetača
+        n_w[iw] = (int)(W_Rpw[iw].value + ran1(&idum)); // trebalo bi uvest optimizaciju koja bi se riješila nekih od ovih šetača
         // printf("n_w[%d] = %d\n", iw, n_w[iw]);
         sum_nw += n_w[iw] - 1;
+        printf("W_Rpw[%d] = %f => n_w[%d] = %d => sum_nw = %d, E_L[%d] = %f, E_L_prime = %f, E_R =%f \n", iw, W_Rpw[iw].value, iw, n_w[iw], sum_nw, iw, E_L[iw], E_L_prime, E_R);
         E_L[iw] = E_L_prime;
         SwE = SwE + E_L[iw];
       } // kraj petlje šetača
 
-      // ############################################################## tu debugiram
       printf("sum_nw=%d\n", sum_nw);
       // ako je suma dodanih šetača veća od preostalog slobodnog prostora u listi
-      if (sum_nw > Nw_start - Nw)
+      if (sum_nw > Nw_max - Nw) // || sum_nw < -Nw_max??
       {
         for (iw = 1; iw <= Nw; iw++)
         {
           printf("n_w[%d] = %d,\t", iw, n_w[iw]);
-          // 1 + koliko ih se nadodalo (sum_nw je isto suma nadodanih, a ne ukupnih n[w])
-          n_w[iw] = 1 + (int)n_w[iw] / sum_nw * (Nw_start - Nw); // n_w' / slobodno = n_w / suma
+          // 1 + koliko ih se nadodalo/oduzelo (sum_nw je isto suma nadodanih, a ne ukupnih n[w])
+          n_w[iw] = 1 + ((int)n_w[iw] - 1) / sum_nw * (Nw_max - Nw); // n_w' / slobodno = n_w / suma
           printf("n_w'[%d] = %d\n", iw, n_w[iw]);
         }
+      }
+      // do -30% - AL OVO IH IZGLEDA SVE VRATI NAZAD U 1
+      if (sum_nw < 0 && abs(sum_nw) >= percentage * Nw0) // je li ovaj uvjet dobar?
+      {
+        // TU OVO NEMA SMISLA, JERBO NIJE DA SVAKI IMA SVOJ NEKI PERCENTAG NEGO ONO, SAM NE BI BAŠ SVI SMJELI OTIĆ U NULU JEBIGA...
+        // ODREŽI NAJGORIH 30%, tj ne 30% neg int koji odgovara razlici trenutnog broja šetača i 70% početnog broja šetača
+
+        // qsort(pairs, size, sizeof(ValueIndexPair), compare);
+
+        qsort(W_Rpw, Nw_max, sizeof(w_pairs), compare);
+
+        // do kojeg inta ide:
+        int broj = Nw - (int)(1 - percentage) * Nw0;
+        // jel trebam pazit kolko ih se uništava?
+
+        for (iw = 0; iw < Nw_max; iw++) // jel OVDJE IW IDE OD 1  ILI OD 0??
+        {
+          if (W_Rpw[iw].value == 0)
+          {
+            if (iw < broj)
+            {
+              n_w[W_Rpw[iw].index] = 0;
+            }
+            else
+            {
+              n_w[W_Rpw[iw].index] = 1;
+            }
+          }
+        }
+        // {
+        //   if (iw < broj)
+        //     n_w[W_Rpw[iw].index] = 0;
+        // }
+        // for (iw)
+
+        //   for (iw = 1; iw <= broj; iw++)
+        //   {
+
+        //     printf("new n_w[%d] = %d,\t", iw, n_w[iw]);
+        //     // 1 + koliko ih se nadodalo/oduzelo (sum_nw je isto suma nadodanih, a ne ukupnih n[w])
+        //     n_w[iw] = 1 + ((int)n_w[iw] - 1) / abs(sum_nw) * (Nw - (1 - percentage) * Nw0); // n_w' / slobodno = n_w / suma
+        //     printf("new n_w'[%d] = %d\n", iw, n_w[iw]);
+        //   }
       }
 
       // korak 10. - akumulacija lokalnih energija nakon stabilizacije (za svaki korak)
@@ -222,7 +285,7 @@ int main(void)
       E_R = StE / Nt; // double check
 
       // korak 11. - kopiranje potomaka R'_p(w) u novi ansambl
-      if (Nw > Nw0 / 10) // ako broj šetača nije pao ispod 10% početnog broja šetača
+      if (Nw > (1 - percentage) * Nw0) // ako broj šetača nije pao ispod 70% početnog broja šetača
       {
         memcpy(x_temp, x, sizeof(x));
         memcpy(y_temp, y, sizeof(y));
