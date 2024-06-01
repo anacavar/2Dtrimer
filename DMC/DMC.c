@@ -41,23 +41,23 @@ double E_kin_L(double, double, double, double, double, double, double, double, d
 double E_pot_L(double, double, double);                                                 // potencijalni dio lokalne energije
 double f_ddr(double), f_dr(double);
 
-// Comparator function for sorting w_pairs structs by value
-int compare(const void *a, const void *b)
-{
-  return ((w_pairs *)a)->value - ((w_pairs *)b)->value;
-}
-
 typedef struct
 {
   double value;
   int index;
 } w_pairs;
 
+// Comparator function for sorting w_pairs structs by value
+int compareByValue(const void *a, const void *b)
+{
+  return ((w_pairs *)a)->value - ((w_pairs *)b)->value;
+}
+
 int main(void)
 {
 #pragma region // VARIJABLE
   long idum = -1234;
-  int ib, it, iw, k, l, indeks;                // indeks bloka, indeks koraka, indeks šetača, indeks čestice
+  int ib, it, iw, i, j, k, l, indeks;                // indeks bloka, indeks koraka, indeks šetača, indeks čestice
   int Nw = Nw0;                                // broj šetača
   double x[4][Nw_max], y[4][Nw_max];           // indeks čestice, indeks šetača - bar 20% više od referentnog broja šetača
   double x_temp[4][Nw_max], y_temp[4][Nw_max]; // temporary lista
@@ -77,6 +77,7 @@ int main(void)
   w_pairs W_Rpw[Nw_max];                       // statistička težina
   int n_w[Nw_max];                             // broj potomaka
   int sum_nw;                                  // suma potomaka nastalih tijekom jednog koraka
+  int nw_max_remove;                          // broj šetača koje smijemo maknuti prije nego broj padne ispod (1-percentage)*Nw0
   int n_w_temp[Nw_max];                        // temporary lista broja potomaka
   double SwE;                                  // = suma(srednjih E) po setacima
   double StE;                                  // = suma (srednjih E) po koracima
@@ -90,11 +91,10 @@ int main(void)
   data = fopen("data.txt", "w");
 
   // inicijalizacija liste radi kasnijeg sortiranja
-
-  for (int i = 0; i < Nw_max; i++)
+  for (i = 0; i < Nw_max; i++)
   {
     W_Rpw[i].value = 1.;
-    W_Rpw[i].index = k;
+    W_Rpw[i].index = i;
   }
 
   SwE = 0;
@@ -233,49 +233,27 @@ int main(void)
           printf("n_w'[%d] = %d\n", iw, n_w[iw]);
         }
       }
-      // do -30% - AL OVO IH IZGLEDA SVE VRATI NAZAD U 1
-      if (sum_nw < 0 && abs(sum_nw) >= percentage * Nw0) // je li ovaj uvjet dobar?
+
+      // ako ih želi pasti na niže od 30% Nw0, onda ubij samo ove do tih 30%. (pošalji u 0), 
+      // ostale koji bi otišli u 0 pošalji u 1, a ostale ostavi kakvi su bili
+      nw_max_remove = Nw - (int)((1-percentage)*Nw0);
+      if (sum_nw < 0 && abs(sum_nw) > nw_max_remove)
       {
-        // TU OVO NEMA SMISLA, JERBO NIJE DA SVAKI IMA SVOJ NEKI PERCENTAG NEGO ONO, SAM NE BI BAŠ SVI SMJELI OTIĆ U NULU JEBIGA...
-        // ODREŽI NAJGORIH 30%, tj ne 30% neg int koji odgovara razlici trenutnog broja šetača i 70% početnog broja šetača
-
-        // qsort(pairs, size, sizeof(ValueIndexPair), compare);
-
-        qsort(W_Rpw, Nw_max, sizeof(w_pairs), compare);
-
-        // do kojeg inta ide:
-        int broj = Nw - (int)(1 - percentage) * Nw0;
-        // jel trebam pazit kolko ih se uništava?
-
-        for (iw = 0; iw < Nw_max; iw++) // jel OVDJE IW IDE OD 1  ILI OD 0??
-        {
-          if (W_Rpw[iw].value == 0)
-          {
-            if (iw < broj)
-            {
-              n_w[W_Rpw[iw].index] = 0;
-            }
-            else
-            {
-              n_w[W_Rpw[iw].index] = 1;
+        qsort(W_Rpw, Nw_max, sizeof(w_pairs), compareByValue); // nisam ziher jel ovo sortira od najvišeg il najnižeg;
+        // sada je W_Rpw sortiran prema values, dakle npr [(0, 56), (1, 36), (2, 56)] itd...
+        // sada
+        for (j = 0; j < Nw; j++){
+          // niš za ove do nw_max_remove
+          if(j >= nw_max_remove){
+            if(n_w[W_Rpw[j].index]==0){
+              n_w[W_Rpw[j].index] = 1;
             }
           }
         }
-        // {
-        //   if (iw < broj)
-        //     n_w[W_Rpw[iw].index] = 0;
-        // }
-        // for (iw)
-
-        //   for (iw = 1; iw <= broj; iw++)
-        //   {
-
-        //     printf("new n_w[%d] = %d,\t", iw, n_w[iw]);
-        //     // 1 + koliko ih se nadodalo/oduzelo (sum_nw je isto suma nadodanih, a ne ukupnih n[w])
-        //     n_w[iw] = 1 + ((int)n_w[iw] - 1) / abs(sum_nw) * (Nw - (1 - percentage) * Nw0); // n_w' / slobodno = n_w / suma
-        //     printf("new n_w'[%d] = %d\n", iw, n_w[iw]);
-        //   }
       }
+
+
+
 
       // korak 10. - akumulacija lokalnih energija nakon stabilizacije (za svaki korak)
       if (ib > NbSkip)
