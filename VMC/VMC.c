@@ -3,9 +3,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include "ran1.c"
-#include "global_vars.h" /* Declaration made available here */
-
-// extern double alpha, gamma_var, s;
+#include "global_vars.h" // import shared variables
 
 // konstante u zadanim mjernim jedinicama i njihov preračun u SI
 #define k_B 1.                                         // boltzmannova konstanta

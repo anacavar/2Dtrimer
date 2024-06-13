@@ -5,6 +5,7 @@
 #include <math.h>
 #include "ran1.c"
 #include "gasdev.c"
+#include "global_vars.h" // import shared variables
 
 // KONSTANTE u zadanim mjernim jedinicama i njihov preračun u SI
 #define k_B 1.                                         // boltzmannova konstanta
@@ -19,7 +20,7 @@
 #define hbar2_si 1.112121717 * pow(10, -68)            // (Js)^2 = (m2kg/s)^2
 
 // POČETNE VRIJEDNOSTI
-#define Nt 100                                 // broj koraka
+#define Nt 1000                                 // broj koraka
 #define Nw0 100                                // početni broj šetača
 #define percentage 0.3                         // +/- varijacije broja šetača
 #define Nw_max (int)(1 + percentage) * Nw0 + 1 // početna duljina liste
@@ -28,9 +29,9 @@
 #define sigma 4 * A                            // angstrema
 #define epsilon 12 * k_B *K                    // dubina jame, u kelvinima preko boltzmannove konstante
 #define L0 30. * A                             // angstrema
-#define alpha 4.62 * A                         // angstrema
-#define gamma 4.77                             // eksponent u probnoj valnoj funkciji
-#define s 0.3 / A                              // eksponent u probnoj valnoj funkciji
+#define alpha_initial 4.55 * A                 // angstrema
+#define gamma_initial 4.77                     // eksponent u probnoj valnoj funkciji
+#define s_initial 0.3 / A                      // eksponent u probnoj valnoj funkciji A^-1
 #define E_trial -5.32 * K                      // kelvina - ENERGIJA (OČEKIVANO) DłOBIVENA IZ VMC-a
 #define mass 4. * u                            // u
 #define dtau 1.0                               // korak vremena ∆τ (čega? u čemu su ove imaginarne jedinice? ni u čemu? veli pero 10 na minus šestu miliKelvina na minus prvu)
@@ -53,7 +54,7 @@ int compareByValue(const void *a, const void *b)
   return ((w_pairs *)a)->value - ((w_pairs *)b)->value;
 }
 
-int main(void)
+void DMC(double *E_return, double *sigmaE_return)
 {
 #pragma region // VARIJABLE
   long idum = -1234;
@@ -83,6 +84,7 @@ int main(void)
   double StE;                                  // = suma (srednjih E) po koracima
   double SbE;                                  // = suma (srednjih E) po blokovima
   double SbE2;                                 // = suma (srednjih E^2) po blokovima
+  double AE, sigmaE;                           // srednja vrijednost i standardna devijacija
   int NbEff;                                   // efektivni indeks bloka
   int Nw_temp;                                 // temporary broj setaca
 #pragma endregion
@@ -127,7 +129,7 @@ int main(void)
       SwE = 0;
       sum_nw = 0;
       // u svakom koraku ažuriram broj šetača
-      printf("Nw = %d\n", Nw);
+      // printf("Nw = %d\n", Nw);
       for (iw = 1; iw <= Nw; iw++) // po šetačima
       {
         // korak 1. - gaussov pomak (Ra)
@@ -214,23 +216,22 @@ int main(void)
         W_Rpw[iw].index = iw;
         // korak 9. - stohastička procjena broja potomaka
         n_w[iw] = (int)(W_Rpw[iw].value + ran1(&idum)); // trebalo bi uvest optimizaciju koja bi se riješila nekih od ovih šetača
-        // printf("n_w[%d] = %d\n", iw, n_w[iw]);
         sum_nw += n_w[iw] - 1;
-        printf("W_Rpw[%d] = %f => n_w[%d] = %d => sum_nw = %d, E_L[%d] = %f, E_L_prime = %f, E_R =%f \n", iw, W_Rpw[iw].value, iw, n_w[iw], sum_nw, iw, E_L[iw], E_L_prime, E_R);
+        // printf("W_Rpw[%d] = %f => n_w[%d] = %d => sum_nw = %d, E_L[%d] = %f, E_L_prime = %f, E_R =%f \n", iw, W_Rpw[iw].value, iw, n_w[iw], sum_nw, iw, E_L[iw], E_L_prime, E_R);
         E_L[iw] = E_L_prime;
         SwE = SwE + E_L[iw];
       } // kraj petlje šetača
 
-      printf("sum_nw=%d\n", sum_nw);
+      // printf("sum_nw=%d\n", sum_nw);
       // ako je suma dodanih šetača veća od preostalog slobodnog prostora u listi
       if (sum_nw > Nw_max - Nw) // || sum_nw < -Nw_max??
       {
         for (iw = 1; iw <= Nw; iw++)
         {
-          printf("n_w[%d] = %d,\t", iw, n_w[iw]);
+          // printf("n_w[%d] = %d,\t", iw, n_w[iw]);
           // 1 + koliko ih se nadodalo/oduzelo (sum_nw je isto suma nadodanih, a ne ukupnih n[w])
           n_w[iw] = 1 + ((int)n_w[iw] - 1) / sum_nw * (Nw_max - Nw); // n_w' / slobodno = n_w / suma
-          printf("n_w'[%d] = %d\n", iw, n_w[iw]);
+          // printf("n_w'[%d] = %d\n", iw, n_w[iw]);
         }
       }
 
@@ -251,9 +252,6 @@ int main(void)
           }
         }
       }
-
-
-
 
       // korak 10. - akumulacija lokalnih energija nakon stabilizacije (za svaki korak)
       if (ib > NbSkip)
@@ -303,23 +301,30 @@ int main(void)
     {
       SbE += StE / Nt;
       SbE2 += StE * StE / (Nt * Nt);
+      // jel se dobro računaju ove brojke???
       fprintf(data, "%d\t%f\t%f\n", NbEff, StE / Nt, SbE / NbEff); // indeks bloka, srednji E po koracima (po jednom bloku), Srednji E po blokovima (od početka simulacije)
-      printf("%6d. blok: Eb = %10.2e\n", NbEff, StE / Nt);
+      // printf("%6d. blok: Eb = %10.2e\n", NbEff, StE / Nt);
     }
   } // kraj petlje blokova
+
+  AE = SbE / NbEff;
+  sigmaE = sqrt((SbE2 / NbEff - AE * AE) / (NbEff - 1.));
+  printf(" alpha = %f, gamma = %f, s = %f\n", alpha, gamma_var, s);
+  printf(" E = %8.5e +- %6.2e \n\n", AE, sigmaE);
+  *E_return = AE;
+  *sigmaE_return = sigmaE;
   fclose(data);
-  return 0;
 }
 
 double f_dr(double r)
 {
-  double fdr = 1 / pow(r, 2) * (gamma * pow((alpha / r), gamma) - s * r - 1 / 2);
+  double fdr = 1 / pow(r, 2) * (gamma_var * pow((alpha / r), gamma_var) - s * r - 1 / 2);
   return fdr;
 }
 
 double f_ddr(double r)
 {
-  double fddr = -1 / pow(r, 2) * (pow(gamma, 2) * pow((alpha / r), gamma) + s * r);
+  double fddr = -1 / pow(r, 2) * (pow(gamma_var, 2) * pow((alpha / r), gamma_var) + s * r);
   return fddr;
 }
 

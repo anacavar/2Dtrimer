@@ -12,3 +12,5 @@
 - [ ] treba li nekako prirodno zahendlat i donju stranu? ko što skaliram liste s gornje strane?
 
 - veli pero da ak fiksiram početne parametre (ugasim multiplikaciju šetača u DMCu) da bih trebala očekivati isto ponašanje dva algoritma
+
+- [X] za oboje - napravit skriptu koja ih samo jednom pokreće...
