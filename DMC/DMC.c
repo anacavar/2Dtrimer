@@ -140,101 +140,98 @@ void DMC(double *E_return, double *sigmaE_return)
         {
           dx = gasdev(&idum) * sigma2; // množi sa varijancom (varijanca je sigma na kvadrat - double check please da nije korijen iz ovog)
           dy = gasdev(&idum) * sigma2; // množi sa varijancom
-          // x_a[k] = x[k][iw] + dx;      // spremamo privremeno, x koordinatu za svaku česticu ovog šetača u ovom koraku
-          // y_a[k] = y[k][iw] + dy;      // spremamo privremeno, y koordinatu za svaku česticu ovog šetača u ovom koraku
-          x[k][iw] = x[k][iw] + dx; // ovo izbriši kasnije!!!!!!!
-          y[k][iw] = y[k][iw] + dy; // ovo izbriši kasnije!!!!!!!!!!1
+          x_a[k] = x[k][iw] + dx;      // spremamo privremeno, x koordinatu za svaku česticu ovog šetača u ovom koraku
+          y_a[k] = y[k][iw] + dy;      // spremamo privremeno, y koordinatu za svaku česticu ovog šetača u ovom koraku
         }
-        // // korak 2. - računanje driftne sile (Fa)
-        // for (k = 1; k <= 3; k++) // po česticama
-        // {
-        //   Fqa_x[k] = 0;
-        //   Fqa_y[k] = 0;
-        //   for (int l = 1; l <= 3; l++) // po česticama
-        //   {
-        //     if (l != k) // osim l!=k
-        //     {
-        //       // 4.92 VEKTOR
-        //       // spremamo privremeno, x smjer sile za svaku česticu ovog šetača u ovom koraku
-        //       Fqa_x[k] += -2 * f_dr(sqrt(pow((x_a[k] - x_a[l]), 2) + pow((y_a[k] - y_a[l]), 2))) * (x_a[k] - x_a[l]); // u x-smjeru;
-        //       // spremamo privremeno, y smjer sile za svaku česticu ovog šetača u ovom koraku
-        //       Fqa_y[k] += -2 * f_dr(sqrt(pow((x_a[k] - x_a[l]), 2) + pow((y_a[k] - y_a[l]), 2))) * (y_a[k] - y_a[l]); // u y-smjeru
-        //     }
-        //   }
-        // }
-        // // korak 3. - pomoćni driftni pomak (Rb)
-        // for (k = 1; k <= 3; k++) // po česticama
-        // {
-        //   x_b[k] = x_a[k] + (hbar2 / (2 * mass)) * dtau / 2 * Fqa_x[k];
-        //   y_b[k] = y_a[k] + (hbar2 / (2 * mass)) * dtau / 2 * Fqa_y[k];
-        // }
-        // // korak 4. - ponovno računanje driftne sile (Fb)
-        // for (k = 1; k <= 3; k++) // po česticama
-        // {
-        //   Fqb_x[k] = 0;
-        //   Fqb_y[k] = 0;
-        //   for (l = 1; l <= 3; l++) // po česticama
-        //   {
-        //     if (l != k) // osim l!=k
-        //     {
-        //       Fqb_x[k] += -2 * f_dr(sqrt(pow((x_b[k] - x_b[l]), 2) + pow((y_b[k] - y_b[l]), 2))) * (x_b[k] - x_b[l]); // u x-smjeru
-        //       Fqb_y[k] += -2 * f_dr(sqrt(pow((x_b[k] - x_b[l]), 2) + pow((y_b[k] - y_b[l]), 2))) * (y_b[k] - y_b[l]); // u y-smjeru
-        //     }
-        //   }
-        // }
-        // // korak 5. - srednji driftni pomak (R'p(w))
-        // for (k = 1; k <= 3; k++) // po česticama
-        // {
-        //   x_pw_prime[k] = x_a[k] + (hbar2 / (2 * mass)) * dtau / 2 * (Fqa_x[k] + Fqb_x[k]) / 2;
-        //   y_pw_prime[k] = y_a[k] + (hbar2 / (2 * mass)) * dtau / 2 * (Fqa_y[k] + Fqb_y[k]) / 2;
-        //   // pohranimo R_pw u R_b
-        //   x_b[k] = x_pw_prime[k];
-        //   y_b[k] = y_pw_prime[k];
-        // }
-        // // korak 6. - računanje driftne sile
-        // for (k = 1; k <= 3; k++) // po česticama
-        // {
-        //   Fq_x_prime[k] = 0;
-        //   Fq_y_prime[k] = 0;
-        //   for (l = 1; l <= 3; l++) // po česticama
-        //   {
-        //     if (l != k) // osim l!=k
-        //     {
-        //       Fq_x_prime[k] += -2 * f_dr(sqrt(pow((x_pw_prime[k] - x_pw_prime[l]), 2) + pow((y_pw_prime[k] - y_pw_prime[l]), 2))) * (x_pw_prime[k] - x_pw_prime[l]); // u x-smjeru
-        //       Fq_y_prime[k] += -2 * f_dr(sqrt(pow((x_pw_prime[k] - x_pw_prime[l]), 2) + pow((y_pw_prime[k] - y_pw_prime[l]), 2))) * (y_pw_prime[k] - y_pw_prime[l]); // u y-smjeru
-        //     }
-        //   }
-        // }
+        // korak 2. - računanje driftne sile (Fa)
+        for (k = 1; k <= 3; k++) // po česticama
+        {
+          Fqa_x[k] = 0;
+          Fqa_y[k] = 0;
+          for (int l = 1; l <= 3; l++) // po česticama
+          {
+            if (l != k) // osim l!=k
+            {
+              // 4.92 VEKTOR
+              // spremamo privremeno, x smjer sile za svaku česticu ovog šetača u ovom koraku
+              Fqa_x[k] += -2 * f_dr(sqrt(pow((x_a[k] - x_a[l]), 2) + pow((y_a[k] - y_a[l]), 2))) * (x_a[k] - x_a[l]); // u x-smjeru;
+              // spremamo privremeno, y smjer sile za svaku česticu ovog šetača u ovom koraku
+              Fqa_y[k] += -2 * f_dr(sqrt(pow((x_a[k] - x_a[l]), 2) + pow((y_a[k] - y_a[l]), 2))) * (y_a[k] - y_a[l]); // u y-smjeru
+            }
+          }
+        }
+        // korak 3. - pomoćni driftni pomak (Rb)
+        for (k = 1; k <= 3; k++) // po česticama
+        {
+          x_b[k] = x_a[k] + (hbar2 / (2 * mass)) * dtau / 2 * Fqa_x[k];
+          y_b[k] = y_a[k] + (hbar2 / (2 * mass)) * dtau / 2 * Fqa_y[k];
+        }
+        // korak 4. - ponovno računanje driftne sile (Fb)
+        for (k = 1; k <= 3; k++) // po česticama
+        {
+          Fqb_x[k] = 0;
+          Fqb_y[k] = 0;
+          for (l = 1; l <= 3; l++) // po česticama
+          {
+            if (l != k) // osim l!=k
+            {
+              Fqb_x[k] += -2 * f_dr(sqrt(pow((x_b[k] - x_b[l]), 2) + pow((y_b[k] - y_b[l]), 2))) * (x_b[k] - x_b[l]); // u x-smjeru
+              Fqb_y[k] += -2 * f_dr(sqrt(pow((x_b[k] - x_b[l]), 2) + pow((y_b[k] - y_b[l]), 2))) * (y_b[k] - y_b[l]); // u y-smjeru
+            }
+          }
+        }
+        // korak 5. - srednji driftni pomak (R'p(w))
+        for (k = 1; k <= 3; k++) // po česticama
+        {
+          x_pw_prime[k] = x_a[k] + (hbar2 / (2 * mass)) * dtau / 2 * (Fqa_x[k] + Fqb_x[k]) / 2;
+          y_pw_prime[k] = y_a[k] + (hbar2 / (2 * mass)) * dtau / 2 * (Fqa_y[k] + Fqb_y[k]) / 2;
+          // pohranimo R_pw u R_b
+          x_b[k] = x_pw_prime[k];
+          y_b[k] = y_pw_prime[k];
+        }
+        // korak 6. - računanje driftne sile
+        for (k = 1; k <= 3; k++) // po česticama
+        {
+          Fq_x_prime[k] = 0;
+          Fq_y_prime[k] = 0;
+          for (l = 1; l <= 3; l++) // po česticama
+          {
+            if (l != k) // osim l!=k
+            {
+              Fq_x_prime[k] += -2 * f_dr(sqrt(pow((x_pw_prime[k] - x_pw_prime[l]), 2) + pow((y_pw_prime[k] - y_pw_prime[l]), 2))) * (x_pw_prime[k] - x_pw_prime[l]); // u x-smjeru
+              Fq_y_prime[k] += -2 * f_dr(sqrt(pow((x_pw_prime[k] - x_pw_prime[l]), 2) + pow((y_pw_prime[k] - y_pw_prime[l]), 2))) * (y_pw_prime[k] - y_pw_prime[l]); // u y-smjeru
+            }
+          }
+        }
         // i lokalne energije (kinetički + potencijalni dio):
-        // r12 = sqrt(pow((x_pw_prime[2] - x_pw_prime[1]), 2) + pow((y_pw_prime[2] - y_pw_prime[1]), 2));
-        // r23 = sqrt(pow((x_pw_prime[3] - x_pw_prime[2]), 2) + pow((y_pw_prime[3] - y_pw_prime[2]), 2));
-        // r13 = sqrt(pow((x_pw_prime[3] - x_pw_prime[1]), 2) + pow((y_pw_prime[3] - y_pw_prime[1]), 2));
-        // E_L_prime = E_kin_L(r12, r13, r23, x_pw_prime[1], x_pw_prime[2], x_pw_prime[3], y_pw_prime[1], y_pw_prime[2], y_pw_prime[3]) + E_pot_L(r12, r13, r23);
+        r12 = sqrt(pow((x_pw_prime[2] - x_pw_prime[1]), 2) + pow((y_pw_prime[2] - y_pw_prime[1]), 2));
+        r23 = sqrt(pow((x_pw_prime[3] - x_pw_prime[2]), 2) + pow((y_pw_prime[3] - y_pw_prime[2]), 2));
+        r13 = sqrt(pow((x_pw_prime[3] - x_pw_prime[1]), 2) + pow((y_pw_prime[3] - y_pw_prime[1]), 2));
+        E_L_prime = E_kin_L(r12, r13, r23, x_pw_prime[1], x_pw_prime[2], x_pw_prime[3], y_pw_prime[1], y_pw_prime[2], y_pw_prime[3]) + E_pot_L(r12, r13, r23);
 
-        // BRIŠI OVO KAD SVE RADI
+        // BRIŠI OVO KAD SVE RADI ??? - šta mi ovo znači?
         r12 = sqrt(pow((x[2][iw] - x[1][iw]), 2) + pow((y[2][iw] - y[1][iw]), 2));
         r23 = sqrt(pow((x[3][iw] - x[2][iw]), 2) + pow((y[3][iw] - y[2][iw]), 2));
         r13 = sqrt(pow((x[3][iw] - x[1][iw]), 2) + pow((y[3][iw] - y[1][iw]), 2));
         E_L[iw] = E_kin_L(r12, r13, r23, x[1][iw], x[2][iw], x[3][iw], y[1][iw], y[2][iw], y[3][iw]) + E_pot_L(r12, r13, r23);
         // printf("%f\t%f\t%f\tE=%f\n", r12, r23, r13, E_L[iw]);
 
-        // // korak 7. - konačni driftni pomak
-        // for (k = 1; k <= 3; k++) // po česticama
-        // {
-        //   x[k][iw] = x_a[k] + (hbar2 / (2 * mass)) * dtau * Fq_x_prime[k];
-        //   y[k][iw] = y_a[k] + (hbar2 / (2 * mass)) * dtau * Fq_y_prime[k];
-        // }
-        // // korak 8. - određivanje statističke težine W(R'_p(w)) - (E_L bez crtanog je iz prošlog koraka (stara energija), E_L' je iz trenutnog koraka (nova energija))
-        // W_Rpw[iw].value = exp(-(1 / 2 * (E_L[iw] + E_L_prime) - E_R) * dtau); // E_R ovdje je neki average koji se mijenja kroz simulaciju...
-        // W_Rpw[iw].index = iw;
-        // // korak 9. - stohastička procjena broja potomaka
-        // n_w[iw] = (int)(W_Rpw[iw].value + ran1(&idum)); // trebalo bi uvest optimizaciju koja bi se riješila nekih od ovih šetača
-        // sum_nw += n_w[iw] - 1;
+        // korak 7. - konačni driftni pomak
+        for (k = 1; k <= 3; k++) // po česticama
+        {
+          x[k][iw] = x_a[k] + (hbar2 / (2 * mass)) * dtau * Fq_x_prime[k];
+          y[k][iw] = y_a[k] + (hbar2 / (2 * mass)) * dtau * Fq_y_prime[k];
+        }
+        // korak 8. - određivanje statističke težine W(R'_p(w)) - (E_L bez crtanog je iz prošlog koraka (stara energija), E_L' je iz trenutnog koraka (nova energija))
+        W_Rpw[iw].value = exp(-(1 / 2 * (E_L[iw] + E_L_prime) - E_R) * dtau); // E_R ovdje je neki average koji se mijenja kroz simulaciju...
+        W_Rpw[iw].index = iw;
+        // korak 9. - stohastička procjena broja potomaka
+        n_w[iw] = (int)(W_Rpw[iw].value + ran1(&idum)); // trebalo bi uvest optimizaciju koja bi se riješila nekih od ovih šetača
+        sum_nw += n_w[iw] - 1;
         // printf("W_Rpw[%d] = %f => n_w[%d] = %d => sum_nw = %d, E_L[%d] = %f, E_L_prime = %f, E_R =%f \n", iw, W_Rpw[iw].value, iw, n_w[iw], sum_nw, iw, E_L[iw], E_L_prime, E_R);
-        // printf("%f\n", E_L_prime);
-        // E_L[iw] = E_L_prime;
-        if(E_L[iw] < 5)// izbriši ovaj uvjet!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1
-          SwE = SwE + E_L[iw];
+        E_L[iw] = E_L_prime;
+
+        SwE = SwE + E_L[iw];
       } // kraj petlje šetača
 
       // // ako je suma dodanih šetača veća od preostalog slobodnog prostora u listi
@@ -315,18 +312,14 @@ void DMC(double *E_return, double *sigmaE_return)
     {
       SbE += StE / Nt;
       SbE2 += StE * StE / (Nt * Nt);
-      // jel se dobro računaju ove brojke???
       // broj efektivnih blokova, prosjek unutar bloka, prosjek od početka simulacije
       fprintf(data, "%d\t%f\t%f\n", NbEff, StE / Nt, SbE / NbEff); // indeks bloka, srednji E po koracima (po jednom bloku), Srednji E po blokovima (od početka simulacije)
-      printf("%6d. blok: Eb = %10.2e\n", NbEff, StE / Nt);
+      // printf("%6d. blok: Eb = %10.2e\n", NbEff, StE / Nt);
     }
   } // kraj petlje blokova
 
   AE = SbE / NbEff;
-
-  // valja li ova formula??
   sigmaE = sqrt(abs(SbE2 / NbEff - AE * AE) / (NbEff - 1.));
-
   printf(" alpha = %f, gamma = %f, s = %f\n", alpha, gamma_var, s);
   printf(" E = %8.5e +- %6.2e \n\n", AE, sigmaE);
   *E_return = AE;

@@ -74,12 +74,9 @@ void VMC(double *E_return, double *sigmaE_return)
     double angle;                                                    // kut između r12 i r13 trimera (za svakog šetača posebno)
     double r12_dist[N_r12_dist + 1], angles_dist[N_angles_dist + 1]; // distribucija duljina r12 i kuteva
     double r12_r13_dist[N_r12_r13_dist + 1][N_r12_r13_dist + 1];     // distribucija duljina r12 i r13
-    double max_r12 = 100, max_r13 = 100, max_angle = 3.14;           // max_angle je pi, koje su dobre vrijednosti max_r12 i max_r13?
+    double max_r12 = 100, max_r13 = 100, max_angle = 3.20;           // max_angle je pi, koje su dobre vrijednosti max_r12 i max_r13?
     // što ako stavim veći max_angle, recimo 2pi?
     int n, m; // indeksi za distribucije
-
-    double srednja_vrijednost_zadnjeg_koraka_po_svim_walkerima;
-
 #pragma endregion
 
     FILE *data, *data_angles, *data_r12, *data_r12_r13, *data_coordinates;
@@ -113,7 +110,6 @@ void VMC(double *E_return, double *sigmaE_return)
         rejected = 0;
         for (it = 1; it <= Nt; it++) // po koracima
         {
-            srednja_vrijednost_zadnjeg_koraka_po_svim_walkerima = 0;
             SwE = 0;
             for (iw = 1; iw <= Nw; iw++) // po šetačima
             {
@@ -185,12 +181,9 @@ void VMC(double *E_return, double *sigmaE_return)
                     if (n <= N_angles_dist)
                         angles_dist[n]++;
                 }
-                srednja_vrijednost_zadnjeg_koraka_po_svim_walkerima += E_L[iw];
             } // kraj petlje šetača
             if (ib == Nb && it == Nt){
                 printf("ib=%d, it=%d\n", ib, it);
-                srednja_vrijednost_zadnjeg_koraka_po_svim_walkerima = srednja_vrijednost_zadnjeg_koraka_po_svim_walkerima/Nw;
-                printf("sr. vr. zad. koraka po svim walkerima = %f\n", srednja_vrijednost_zadnjeg_koraka_po_svim_walkerima);
             }
             // akumulacija podataka nakon stabilizacije
             if (ib > NbSkip)
@@ -241,9 +234,7 @@ void VMC(double *E_return, double *sigmaE_return)
     }
 
     AE = SbE / NbEff;
-    // JA MISLIM DA OVA FORMULA MATEMATIČKI NE VALJA - RASPIŠI TO - jel dovoljno stavit apsolutnu vrijednost?
     sigmaE = sqrt(abs(SbE2 / NbEff - AE * AE) / (NbEff - 1.));
-
     printf(" konacni max. korak: %6.2e\n", dxyMax);
     printf(" alpha = %f, gamma = %f, s = %f\n", alpha, gamma_var, s);
     printf(" E = %8.5e +- %6.2e \n\n", AE, sigmaE);
@@ -292,6 +283,3 @@ double f_ddr(double r)
     double fddr = -1 / pow(r, 2) * (pow(gamma_var, 2) * pow((alpha / r), gamma_var) + s * r);
     return fddr;
 }
-
-
-// ZADNJE POZICIJE ŠETAČA OD VMC UČITATI U DMC
