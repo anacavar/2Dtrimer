@@ -5,8 +5,6 @@
 
 double alpha, gamma_var, s;
 
-// NISI STIGLA ISTESTIRAT OVO!!!
-
 int main()
 {
   double E, sigmaE;
