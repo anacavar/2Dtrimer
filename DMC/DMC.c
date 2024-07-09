@@ -229,39 +229,41 @@ void DMC(double *E_return, double *sigmaE_return)
         n_w[iw] = (int)(W_Rpw[iw].value + ran1(&idum)); // trebalo bi uvest optimizaciju koja bi se riješila nekih od ovih šetača
         sum_nw += n_w[iw] - 1;
         // printf("W_Rpw[%d] = %f => n_w[%d] = %d => sum_nw = %d, E_L[%d] = %f, E_L_prime = %f, E_R =%f \n", iw, W_Rpw[iw].value, iw, n_w[iw], sum_nw, iw, E_L[iw], E_L_prime, E_R);
+        
+        // zaš se ovaj E_L_prime ne mijenja???
         E_L[iw] = E_L_prime;
 
         SwE = SwE + E_L[iw];
       } // kraj petlje šetača
 
-      // // ako je suma dodanih šetača veća od preostalog slobodnog prostora u listi
-      // if (sum_nw > Nw_max - Nw) // || sum_nw < -Nw_max??
-      // {
-      //   for (iw = 1; iw <= Nw; iw++)
-      //   {
-      //     // printf("n_w[%d] = %d,\t", iw, n_w[iw]);
-      //     // 1 + koliko ih se nadodalo/oduzelo (sum_nw je isto suma nadodanih, a ne ukupnih n[w])
-      //     n_w[iw] = 1 + ((int)n_w[iw] - 1) / sum_nw * (Nw_max - Nw); // n_w' / slobodno = n_w / suma
-      //     // printf("n_w'[%d] = %d\n", iw, n_w[iw]);
-      //   }
-      // }
+      // ako je suma dodanih šetača veća od preostalog slobodnog prostora u listi
+      if (sum_nw > Nw_max - Nw) // || sum_nw < -Nw_max??
+      {
+        for (iw = 1; iw <= Nw; iw++)
+        {
+          // printf("n_w[%d] = %d,\t", iw, n_w[iw]);
+          // 1 + koliko ih se nadodalo/oduzelo (sum_nw je isto suma nadodanih, a ne ukupnih n[w])
+          n_w[iw] = 1 + ((int)n_w[iw] - 1) / sum_nw * (Nw_max - Nw); // n_w' / slobodno = n_w / suma
+          // printf("n_w'[%d] = %d\n", iw, n_w[iw]);
+        }
+      }
 
-      // // ako ih želi pasti na niže od 30% Nw0, onda ubij samo ove do tih 30%. (pošalji u 0), 
-      // // ostale koji bi otišli u 0 pošalji u 1, a ostale ostavi kakvi su bili
-      // nw_max_remove = Nw - (int)((1-percentage)*Nw0);
-      // if (sum_nw < 0 && abs(sum_nw) > nw_max_remove)
-      // {
-      //   qsort(W_Rpw, Nw_max, sizeof(w_pairs), compareByValue); // nisam ziher jel ovo sortira od najvišeg il najnižeg;
-      //   // sada je W_Rpw sortiran prema values, dakle npr [(0, 56), (1, 36), (2, 56)] itd...
-      //   for (j = 0; j < Nw; j++){
-      //     // niš za ove do nw_max_remove
-      //     if(j >= nw_max_remove){
-      //       if(n_w[W_Rpw[j].index]==0){
-      //         n_w[W_Rpw[j].index] = 1;
-      //       }
-      //     }
-      //   }
-      // }
+      // ako ih želi pasti na niže od 30% Nw0, onda ubij samo ove do tih 30%. (pošalji u 0), 
+      // ostale koji bi otišli u 0 pošalji u 1, a ostale ostavi kakvi su bili
+      nw_max_remove = Nw - (int)((1-percentage)*Nw0);
+      if (sum_nw < 0 && abs(sum_nw) > nw_max_remove)
+      {
+        qsort(W_Rpw, Nw_max, sizeof(w_pairs), compareByValue); // nisam ziher jel ovo sortira od najvišeg il najnižeg;
+        // sada je W_Rpw sortiran prema values, dakle npr [(0, 56), (1, 36), (2, 56)] itd...
+        for (j = 0; j < Nw; j++){
+          // niš za ove do nw_max_remove
+          if(j >= nw_max_remove){
+            if(n_w[W_Rpw[j].index]==0){
+              n_w[W_Rpw[j].index] = 1;
+            }
+          }
+        }
+      }
 
       // korak 10. - akumulacija lokalnih energija nakon stabilizacije (za svaki korak)
       if (ib > NbSkip)
@@ -270,51 +272,50 @@ void DMC(double *E_return, double *sigmaE_return)
       }
       E_R = StE / Nt; // double check
 
-      // // korak 11. - kopiranje potomaka R'_p(w) u novi ansambl
-      // if (Nw > (1 - percentage) * Nw0) // ako broj šetača nije pao ispod 70% početnog broja šetača
-      // {
-      //   memcpy(x_temp, x, sizeof(x));
-      //   memcpy(y_temp, y, sizeof(y));
-      //   memcpy(E_L_temp, E_L, sizeof(E_L));
-      //   memcpy(n_w_temp, n_w, sizeof(n_w));
-      //   Nw_temp = Nw;
-      //   Nw = 0;
-      //   indeks = 1;
-      //   for (iw = 1; iw <= Nw_temp; iw++)
-      //   {
-      //     if (n_w_temp[iw] != 0) // ako je n = 0 onda taj šetač biva uništen (preskačemo ga)
-      //     {
-      //       for (int in = 0; in < n_w_temp[iw]; in++)
-      //       {
-      //         for (k = 1; k <= 3; k++)
-      //         {
-      //           x[k][indeks + in] = x_temp[k][iw];
-      //           y[k][indeks + in] = y_temp[k][iw];
-      //         }
-      //         E_L[indeks + in] = E_L_temp[iw];
-      //         n_w[indeks + in] = n_w_temp[iw];
-      //       }
-      //     }
-      //     if (iw != Nw_temp) // ako nije zadnji korak
-      //     {
-      //       indeks += n_w_temp[iw];
-      //     }
-      //     else if (iw == Nw_temp && n_w_temp[iw] == 0)
-      //     {
-      //       indeks = indeks - 1;
-      //     }
-      //   }
-      //   Nw = indeks; // brijem ide -1 jer kao ne trebam se dalje pomaknut od zadnjeg indeksa
-      // }
-
+      // korak 11. - kopiranje potomaka R'_p(w) u novi ansambl
+      if (Nw > (1 - percentage) * Nw0) // ako broj šetača nije pao ispod 70% početnog broja šetača
+      {
+        memcpy(x_temp, x, sizeof(x));
+        memcpy(y_temp, y, sizeof(y));
+        memcpy(E_L_temp, E_L, sizeof(E_L));
+        memcpy(n_w_temp, n_w, sizeof(n_w));
+        Nw_temp = Nw;
+        Nw = 0;
+        indeks = 1;
+        for (iw = 1; iw <= Nw_temp; iw++)
+        {
+          if (n_w_temp[iw] != 0) // ako je n = 0 onda taj šetač biva uništen (preskačemo ga)
+          {
+            for (int in = 0; in < n_w_temp[iw]; in++)
+            {
+              for (k = 1; k <= 3; k++)
+              {
+                x[k][indeks + in] = x_temp[k][iw];
+                y[k][indeks + in] = y_temp[k][iw];
+              }
+              E_L[indeks + in] = E_L_temp[iw];
+              n_w[indeks + in] = n_w_temp[iw];
+            }
+          }
+          if (iw != Nw_temp) // ako nije zadnji korak
+          {
+            indeks += n_w_temp[iw];
+          }
+          else if (iw == Nw_temp && n_w_temp[iw] == 0)
+          {
+            indeks = indeks - 1;
+          }
+        }
+        Nw = indeks; // brijem ide -1 jer kao ne trebam se dalje pomaknut od zadnjeg indeksa
+      }
     } // kraj petlje koraka
     if (ib > NbSkip)
     {
       SbE += StE / Nt;
-      SbE2 += StE * StE / (Nt * Nt);
+      SbE2 += StE*StE / (Nt*Nt);
       // broj efektivnih blokova, prosjek unutar bloka, prosjek od početka simulacije
       fprintf(data, "%d\t%f\t%f\n", NbEff, StE / Nt, SbE / NbEff); // indeks bloka, srednji E po koracima (po jednom bloku), Srednji E po blokovima (od početka simulacije)
-      // printf("%6d. blok: Eb = %10.2e\n", NbEff, StE / Nt);
+      printf("%6d. blok: Eb = %f\n", NbEff, StE / Nt);
     }
   } // kraj petlje blokova
 
