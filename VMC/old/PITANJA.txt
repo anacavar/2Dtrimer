@@ -1,7 +1,15 @@
 7/5/2024
 
-1. Je li valja ona formula za srednju vrijednost i za sigmu??
-2. Jel se mijenja opće vrijednost DMCa?
+1. Je li valja ona formula za srednju vrijednost i za sigmu? - double check da se ono množi s sigma2 a ne samo sigma (linija 141)
+3. ZA PERU: Zaš se u koraku 6. računa lokalna energija prije nego što se napravi konačni korak 7.??
+4. Jel prvo kopiram ansambl il prvo računam energije? - ja mislim da trebam akumulirat energije tek nakon šta sam skužila koji mi je novi ansambl
+
+7/29/2024
+1. Zaš mi je greška 0? možda je samo u premlaom redu veličine pa se zaokruži na 0?
+2. pitat Peru za mishljenje o grafu.
+3. KOJI JE APPROPRIATE RANDOM BROJ???
+4. PROVJERI KAKO TI SE KREĆU ŠETAČI... JEL SE IKAD MNOŽE ONO?? JEL NEKE ENERGIJE MOŽDA DIVLJAJU I NESTAJU JER JE NEKA FORMULA KRIVA?
+
 
 
 
