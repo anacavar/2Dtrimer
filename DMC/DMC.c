@@ -77,7 +77,7 @@ void DMC(double *E_return, double *sigmaE_return)
   double E_L_temp[Nw_max];                     // temporary lista
   double E_L_prime;                            // lokalna energija trenutnog koraka - placeholder za novu energiju
   double E_R;                                  // energija R koja se mijenja u svkakom koraku (za svakog šetača??)
-  double E_kin_calc, E_pot_calc;
+  double E_kin_calc, E_pot_calc;               // kinetički i potencijalni dio energije
   w_pairs W_Rpw[Nw_max];                       // statistička težina
   int n_w[Nw_max];                             // broj potomaka
   int sum_nw;                                  // suma potomaka nastalih tijekom jednog koraka
@@ -91,7 +91,7 @@ void DMC(double *E_return, double *sigmaE_return)
   double AE, sigmaE;                           // srednja vrijednost i standardna devijacija
   int NbEff;                                   // efektivni indeks bloka
   int Nw_temp;                                 // temporary broj setaca
-  double rand_num;                               // random broj
+  double rand_num;                             // random broj
 #pragma endregion
 
   FILE *data, *VMC_coordinates;
@@ -224,7 +224,7 @@ void DMC(double *E_return, double *sigmaE_return)
 
         // korak 9. - stohastička procjena broja potomaka
         rand_num = ran1(&idum);
-        n_w[iw] = (int)(W_Rpw[iw].value + 0.5*rand_num); // trebalo bi uvest optimizaciju koja bi se riješila nekih od ovih šetača
+        n_w[iw] = (int)(W_Rpw[iw].value + rand_num); // trebalo bi uvest optimizaciju koja bi se riješila nekih od ovih šetača
 
         sum_nw += n_w[iw] - 1; // suma nadodanih
         E_L[iw] = E_L_prime;
@@ -303,25 +303,22 @@ void DMC(double *E_return, double *sigmaE_return)
       if (ib > NbSkip)
       {
         StE += SwE / Nw;
-        // if(ib==1){
-        //   printf("prosjek po walkerima za %d. korak: SwE(%f)/Nw(%d)=%f\n", it, SwE, Nw, SwE/Nw);
-        // }
       }
-      // E_R = SwE / Nw; // ovo je srednja vrijednost energije po svim šetačima?? KOLIKO STABILNA BI TREBALA BITI OVA VRIJEDNOST???
+      E_R = SwE / Nw; // ovo je srednja vrijednost energije po svim šetačima?? KOLIKO STABILNA BI TREBALA BITI OVA VRIJEDNOST???
     } // kraj petlje koraka
     if (ib > NbSkip)
     {
       SbE += StE / Nt;
       SbE2 += StE*StE / (Nt*Nt);
       fprintf(data, "%d\t%f\t%f\n", NbEff, StE / Nt, SbE / NbEff); // broj efektivnih blokova, prosjek unutar bloka, prosjek od početka simulacije
-      printf("%6d. blok: Eb = %f\n", NbEff, StE / Nt);
+      printf("%6d. blok: Nw=%d\tEb = %f\n", NbEff, StE / Nt, Nw);
     }
   } // kraj petlje blokova
 
   AE = SbE / NbEff;
   sigmaE = sqrt(abs(SbE2 / NbEff - AE * AE) / (NbEff - 1.));
   printf(" alpha = %f, gamma = %f, s = %f\n", alpha, gamma_var, s);
-  printf(" E = %8.5e +- %6.2e \n\n", AE, sigmaE);
+  printf(" E = %8.5e +- %1.5e \n\n", AE, sigmaE);
   *E_return = AE;
   *sigmaE_return = sigmaE;
   fclose(data);

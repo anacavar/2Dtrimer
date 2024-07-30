@@ -9,7 +9,8 @@
 2. pitat Peru za mishljenje o grafu.
 3. KOJI JE APPROPRIATE RANDOM BROJ???
 4. PROVJERI KAKO TI SE KREĆU ŠETAČI... JEL SE IKAD MNOŽE ONO?? JEL NEKE ENERGIJE MOŽDA DIVLJAJU I NESTAJU JER JE NEKA FORMULA KRIVA?
-
-
-
-
+5. !!!!!!!! E_R = SwE / Nw; // ovo je srednja vrijednost energije po svim šetačima?? KOLIKO STABILNA BI TREBALA BITI OVA VRIJEDNOST???!!!!!!!!!!!!!!
+6. double check ono descending/ascending možda...
+7. pitanje je i guess kolko često mijenjati E_R....?
+8. probaj mu dat više vremena za stabilizaciju? više šetača? više blokova? nez...
+9. jel neke generalne energije djeluju realno? koliki postotak ih se odbacuje?
