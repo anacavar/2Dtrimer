@@ -33,7 +33,6 @@
 #define alpha_initial 4.55 * A                   // angstrema
 #define gamma_initial 4.77                       // eksponent u probnoj valnoj funkciji
 #define s_initial 0.3 / A                        // eksponent u probnoj valnoj funkciji A^-1
-#define E_trial -5.32 * K                        // kelvina - ENERGIJA (OČEKIVANO) DłOBIVENA IZ VMC-a
 #define mass 4. * u                              // u
 #define dtau 1.0 * pow(10, -3) / K               // korak vremena ∆τ (10^(-6) 1/mK)
 
@@ -92,6 +91,7 @@ void DMC(double *E_return, double *sigmaE_return)
   int NbEff;                                   // efektivni indeks bloka
   int Nw_temp;                                 // temporary broj setaca
   double rand_num;                             // random broj
+  int plus_minus, deltaNw, remainder, count;                              // broj dodanih/oduzetih šetača
 #pragma endregion
 
   FILE *data, *VMC_coordinates;
@@ -219,24 +219,54 @@ void DMC(double *E_return, double *sigmaE_return)
         E_L_prime = E_kin_calc + E_pot_calc;
 
         // korak 8. - određivanje statističke težine W(R'_p(w)) - (E_L bez crtanog je iz prošlog koraka (stara energija), E_L' je iz trenutnog koraka (nova energija))
-        W_Rpw[iw].value = exp(-(0.5 * (E_L[iw] + E_L_prime) - E_R) * dtau); // E_R ovdje je neki average koji se mijenja kroz simulaciju (pri svakom koraku)...
+        W_Rpw[iw].value = exp(-(0.5 * (E_L[iw] + E_L_prime) - E_R) * dtau); // E_R ovdje je prosjek koji se mijenja kroz simulaciju pri svakom koraku
         W_Rpw[iw].index = iw;
 
         // korak 9. - stohastička procjena broja potomaka
         rand_num = ran1(&idum);
-        n_w[iw] = (int)(W_Rpw[iw].value + rand_num); // trebalo bi uvest optimizaciju koja bi se riješila nekih od ovih šetača
 
+        // PITALA PERU, ČEKAM ODG..... zaš mi se ne umnožavaju šetači...
+        // MOŽDA MALO REGULIRAT OVAJ BROJ? KAO, AK JE ISPOD NULE ONDA POVISIT, AK JE IZNAD ONDA SMANJIT? 
+        // if ((0.5 * (E_L[iw] + E_L_prime) - E_R) * dtau > 0){
+        //   printf("smanji random\n");
+        // }
+        // if((0.5 * (E_L[iw] + E_L_prime) - E_R) * dtau < 0){
+        //   printf("povećaj random heh\n");
+        // }
+
+        n_w[iw] = (int)(W_Rpw[iw].value + rand_num); // trebalo bi uvest optimizaciju koja bi se riješila nekih od ovih šetača        
         sum_nw += n_w[iw] - 1; // suma nadodanih
         E_L[iw] = E_L_prime;
       } // kraj petlje šetača
       
       // ako je suma dodanih šetača veća od preostalog slobodnog prostora u listi
-      if (sum_nw > Nw_max - Nw) // || sum_nw < -Nw_max??
+      deltaNw = Nw_max - Nw;
+      if (sum_nw > deltaNw) // što za sum_nw < -Nw_max ?
       {
-        for (iw = 1; iw <= Nw; iw++)
+        count = 0; // <= deltaNw
+        for (iw = 1; iw <= Nw; iw++) // nije dobro testirano
         {
-          // 1 + koliko ih se nadodalo/oduzelo (sum_nw je isto suma nadodanih, a ne ukupnih n[w])
-          n_w[iw] = 1 + (int)((n_w[iw] - 1) / sum_nw) * (Nw_max - Nw); // n_w' / slobodno = n_w / suma
+          if(n_w[iw] == 0) // svi koji idu u nulu moraju ići u nulu
+          {
+            plus_minus = -1; 
+            count += plus_minus; // ?
+          }
+
+          if(n_w[iw] > 0){
+            plus_minus = (int)((n_w[iw] - 1)*deltaNw / sum_nw); // n_w' / slobodno = n_w / suma
+            remainder = ((n_w[iw] - 1)*deltaNw) % sum_nw;
+            if (remainder >= 0.5){
+              plus_minus += 1; // round up
+            }
+            deltaNw += plus_minus;
+            if (count > deltaNw) 
+            {
+              plus_minus -= count - deltaNw; // oduzmemo razliku
+              count = deltaNw; // spustimo na maskimalnu dozvoljenu popunjenost
+            }
+          }
+
+          n_w[iw] = 1 + plus_minus; 
         }
       }
 
@@ -292,7 +322,7 @@ void DMC(double *E_return, double *sigmaE_return)
             indeks = indeks - 1;
           }
         }
-        Nw = indeks; // brijem ide -1 jer kao ne trebam se dalje pomaknut od zadnjeg indeksaž
+        Nw = indeks; // brijem ide -1 jer kao ne trebam se dalje pomaknut od zadnjeg indeksa
       }
 
       for(iw = 1; iw<=Nw; iw++){
@@ -304,14 +334,14 @@ void DMC(double *E_return, double *sigmaE_return)
       {
         StE += SwE / Nw;
       }
-      E_R = SwE / Nw; // ovo je srednja vrijednost energije po svim šetačima?? KOLIKO STABILNA BI TREBALA BITI OVA VRIJEDNOST???
+      E_R = SwE / Nw; // ovo je srednja vrijednost energije po svim šetačima, računamo za svaki korak
     } // kraj petlje koraka
     if (ib > NbSkip)
     {
       SbE += StE / Nt;
       SbE2 += StE*StE / (Nt*Nt);
       fprintf(data, "%d\t%f\t%f\n", NbEff, StE / Nt, SbE / NbEff); // broj efektivnih blokova, prosjek unutar bloka, prosjek od početka simulacije
-      printf("%6d. blok: Nw=%d\tEb = %f\n", NbEff, StE / Nt, Nw);
+      printf("%6d. blok: Nw=%d\tEb = %f\n", NbEff, Nw, StE / Nt);
     }
   } // kraj petlje blokova
 
