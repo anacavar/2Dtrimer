@@ -22,9 +22,11 @@
 // POČETNE VRIJEDNOSTI
 #define Nt 1000                                  // broj koraka
 #define Nw0 100                                  // početni broj šetača
+// ima bug kad se promjene Nw0 i Nb!!!!!!!!!!!!!  u oba algoritma
 #define percentage 0.3                           // +/- varijacije broja šetača
-#define Nw_max (int)(1 + percentage) * Nw0 + 1   // početna duljina liste
+#define Nw_max (int)(1 + percentage) * Nw0 + 1   // početna duljina liste - zaš je točno ovdje +1 ????
 #define Nw_lower_bound (int)((1-percentage)*Nw0) // donja granica duljine liste
+// #define Nb 420                                   // broj blokova
 #define Nb 220                                   // broj blokova
 #define NbSkip 20                                 // broj prvih blokova koje preskačemo
 #define sigma 4 * A                              // angstrema
@@ -110,7 +112,7 @@ void DMC(double *E_return, double *sigmaE_return)
   }
 
   SwE = 0;
-  // inicijalizacija koordinata čestica
+  // inicijalizacija koordinata čestica - ! ALI MORAJU VJEROJATNO BITI ISTOG BROJA ŠETAČA I ČESTICA ITD!!!
   for (iw = 1; iw <= Nw; iw++) // po šetačima
   {
     // load coordinates from VMC
@@ -319,10 +321,10 @@ void DMC(double *E_return, double *sigmaE_return)
           }
           else if (iw == Nw_temp && n_w_temp[iw] == 0)
           {
-            indeks = indeks - 1;
+            indeks = indeks - 1; // brijem ide -1 jer kao ne trebam se dalje pomaknut od zadnjeg indeksa
           }
         }
-        Nw = indeks; // brijem ide -1 jer kao ne trebam se dalje pomaknut od zadnjeg indeksa
+        Nw = indeks; 
       }
 
       for(iw = 1; iw<=Nw; iw++){
