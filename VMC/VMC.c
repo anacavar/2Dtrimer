@@ -17,13 +17,13 @@
 #define hbar2 4.851159708 * 10 * k_B *K *pow(A, 2) * u // (reducirana planckova konstanta)^2
 #define hbar2_si 1.112121717 * pow(10, -68)            // (Js)^2 = (m2kg/s)^2
 // početne vrijednosti
-#define Nw 100                 // broj šetača
-#define Nt 1000                // broj koraka
-#define Nb 220                 // broj blokova
+// #define Nw_initial 100                 // broj šetača
+// #define Nt_initial 1000                // broj koraka
+// #define Nb_initial 220                 // broj blokova
+// #define NbSkip_initial 20              // broj prvih blokova koje preskačemo
 #define N_r12_dist 100         // broj binova za distribuciju r12
 #define N_r12_r13_dist 100     // broj binova za distribuciju r12 i r13
 #define N_angles_dist 100      // broj binova za distribuciju kuteva
-#define NbSkip 20              // broj prvih blokova koje preskačemo
 #define sigma 4 * A            // angstrema
 #define epsilon 12 * k_B *K    // dubina jame, u kelvinima preko boltzmannove konstante
 #define L0 30. * A             // angstrema
@@ -45,8 +45,9 @@ double E_pot_L(double, double, double);                                         
 double f_ddr(double), f_dr(double);
 
 // OČEKIVANA ENERGIJA BI TREBALA BITI OKO -5 KELVINA
-void VMC(double *E_return, double *sigmaE_return)
+void VMC(double *E_return, double *sigmaE_return, int Nt, int Nw, int Nb, int NbSkip)
 {
+    printf("VMC: Nt=%d; Nw=%d; Nb=%d; NbSkip=%d\n", Nt, Nw, Nb, NbSkip);
 #pragma region // VARIJABLE
     long idum = -1234;
     int i, ib, it, iw, k;

@@ -20,15 +20,11 @@
 #define hbar2_si 1.112121717 * pow(10, -68)            // (Js)^2 = (m2kg/s)^2
 
 // POČETNE VRIJEDNOSTI
-#define Nt 1000                                  // broj koraka
-#define Nw0 100                                  // početni broj šetača
-// ima bug kad se promjene Nw0 i Nb!!!!!!!!!!!!!  u oba algoritma
+#define Nt_initial 1000                                  // broj koraka
+#define Nw0_initial 100                                  // početni broj šetača
+#define Nb_initial 220                                   // broj blokova
+#define NbSkip_initial 20                                 // broj prvih blokova koje preskačemo
 #define percentage 0.3                           // +/- varijacije broja šetača
-#define Nw_max (int)(1 + percentage) * Nw0 + 1   // početna duljina liste - zaš je točno ovdje +1 ????
-#define Nw_lower_bound (int)((1-percentage)*Nw0) // donja granica duljine liste
-// #define Nb 420                                   // broj blokova
-#define Nb 220                                   // broj blokova
-#define NbSkip 20                                 // broj prvih blokova koje preskačemo
 #define sigma 4 * A                              // angstrema
 #define epsilon 12 * k_B * K                     // dubina jame, u kelvinima preko boltzmannove konstante
 #define L0 30. * A                               // angstrema
@@ -57,12 +53,16 @@ int compareByValue(const void *a, const void *b)
   return ((w_pairs *)b)->value - ((w_pairs *)a)->value; // descending - ..., 3, 2, 1, 0
 }
 
-void DMC(double *E_return, double *sigmaE_return)
+void DMC(double *E_return, double *sigmaE_return, int Nt, int Nw0, int Nb, int NbSkip)
 {
+  printf("DMC: Nt=%d; Nw=%d; Nb=%d; NbSkip=%d\n", Nt, Nw0, Nb, NbSkip);
+
 #pragma region // VARIJABLE
   long idum = -1234;
   int ib, it, iw, i, j, k, l, indeks;          // indeks bloka, indeks koraka, indeks šetača, indeks čestice
   int Nw = Nw0;                                // broj šetača
+  int Nw_max = (int)(1 + percentage) * Nw0 + 1;  // početna duljina liste - zaš je točno ovdje +1 ????
+  int Nw_lower_bound = (int)((1-percentage)*Nw0); // donja granica duljine liste
   double x[4][Nw_max], y[4][Nw_max];           // indeks čestice, indeks šetača - bar 20% više od referentnog broja šetača
   double x_temp[4][Nw_max], y_temp[4][Nw_max]; // temporary lista
   double r12, r23, r13;                        // udaljenosti između čestica
@@ -95,6 +95,12 @@ void DMC(double *E_return, double *sigmaE_return)
   double rand_num;                             // random broj
   int plus_minus, deltaNw, remainder, count;                              // broj dodanih/oduzetih šetača
 #pragma endregion
+
+  // const char *batchScript = "C:\\repos\\2Dtrimer\\VMC\\prerunVMC.bat";
+  char batchScript[256];
+  snprintf(batchScript, sizeof(batchScript), "C:\\repos\\2Dtrimer\\DMC\\prerunVMC.bat %d %d %d %d", Nt, Nw, Nb, NbSkip);
+  printf("%s\n", batchScript);
+  system(batchScript);
 
   FILE *data, *VMC_coordinates;
   data = fopen("data.txt", "w");

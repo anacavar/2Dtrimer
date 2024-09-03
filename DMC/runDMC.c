@@ -11,11 +11,9 @@ int main()
   double da;
   double gamma_min = 4.5, gamma_max = 4.6;
   double alpha_min = 4.54, alpha_max = 4.75;
-  // double alpha_min = 4.7, alpha_max = 4.8;
   double s_min = 0.2, s_max = 0.4;
   double E, sigmaE;
   int N = 5;
-  // int N = 10;
   dg = (gamma_max - gamma_min) / N;
   ds = (s_max - s_min) / N;
   da = (alpha_max - alpha_min) / N;
@@ -32,7 +30,7 @@ int main()
     {
       alpha = alpha_min + ia * da;
       // izvrti program..
-      DMC(&E, &sigmaE);
+      DMC(&E, &sigmaE, 1000, 100, 220, 20);
       fprintf(dataEs, "%f\t%f\t%f\t%f\n", E, sigmaE, alpha, gamma_var);
     }
   }
