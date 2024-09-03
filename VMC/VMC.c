@@ -47,7 +47,7 @@ double f_ddr(double), f_dr(double);
 // OČEKIVANA ENERGIJA BI TREBALA BITI OKO -5 KELVINA
 void VMC(double *E_return, double *sigmaE_return, int Nt, int Nw, int Nb, int NbSkip)
 {
-    printf("VMC: Nt=%d; Nw=%d; Nb=%d; NbSkip=%d\n", Nt, Nw, Nb, NbSkip);
+    printf("\nVMC:\n Nt=%d; Nw=%d; Nb=%d; NbSkip=%d\n", Nt, Nw, Nb, NbSkip);
 #pragma region // VARIJABLE
     long idum = -1234;
     int i, ib, it, iw, k;
@@ -182,9 +182,6 @@ void VMC(double *E_return, double *sigmaE_return, int Nt, int Nw, int Nb, int Nb
                         angles_dist[n]++;
                 }
             } // kraj petlje šetača
-            if (ib == Nb && it == Nt){
-                printf("ib=%d, it=%d\n", ib, it);
-            }
             // akumulacija podataka nakon stabilizacije
             if (ib > NbSkip)
             {
@@ -205,7 +202,7 @@ void VMC(double *E_return, double *sigmaE_return, int Nt, int Nw, int Nb, int Nb
             SbE2 += StE*StE / (Nt*Nt);
             fprintf(data, "%d\t%f\t%f\n", NbEff, StE / Nt, SbE / NbEff); // indeks bloka, srednji E po koracima (po jednom bloku), Srednji E po blokovima (od početka simulacije)
             itmp = (int)(round(ratio * 100.));
-            // printf("%6d. blok:  %d%% prihvacenih,  Eb = %10.2e\n", NbEff, itmp, StE / Nt);
+            printf("%6d. blok:  %d%% prihvacenih,  Eb = %10.2e\n", NbEff, itmp, StE / Nt);
         }
     } // kraj petlje blokova
 

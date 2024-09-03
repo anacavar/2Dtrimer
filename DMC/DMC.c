@@ -55,8 +55,6 @@ int compareByValue(const void *a, const void *b)
 
 void DMC(double *E_return, double *sigmaE_return, int Nt, int Nw0, int Nb, int NbSkip)
 {
-  printf("DMC: Nt=%d; Nw=%d; Nb=%d; NbSkip=%d\n", Nt, Nw0, Nb, NbSkip);
-
 #pragma region // VARIJABLE
   long idum = -1234;
   int ib, it, iw, i, j, k, l, indeks;          // indeks bloka, indeks koraka, indeks šetača, indeks čestice
@@ -96,11 +94,11 @@ void DMC(double *E_return, double *sigmaE_return, int Nt, int Nw0, int Nb, int N
   int plus_minus, deltaNw, remainder, count;                              // broj dodanih/oduzetih šetača
 #pragma endregion
 
-  // const char *batchScript = "C:\\repos\\2Dtrimer\\VMC\\prerunVMC.bat";
   char batchScript[256];
   snprintf(batchScript, sizeof(batchScript), "C:\\repos\\2Dtrimer\\DMC\\prerunVMC.bat %d %d %d %d", Nt, Nw, Nb, NbSkip);
-  printf("%s\n", batchScript);
   system(batchScript);
+
+  printf("\nDMC:\n Nt=%d; Nw0=%d; Nb=%d; NbSkip=%d\n", Nt, Nw0, Nb, NbSkip);
 
   FILE *data, *VMC_coordinates;
   data = fopen("data.txt", "w");
@@ -118,7 +116,7 @@ void DMC(double *E_return, double *sigmaE_return, int Nt, int Nw0, int Nb, int N
   }
 
   SwE = 0;
-  // inicijalizacija koordinata čestica - ! ALI MORAJU VJEROJATNO BITI ISTOG BROJA ŠETAČA I ČESTICA ITD!!!
+  // inicijalizacija koordinata čestica 
   for (iw = 1; iw <= Nw; iw++) // po šetačima
   {
     // load coordinates from VMC
