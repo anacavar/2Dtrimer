@@ -249,6 +249,10 @@ void DMC(double *E_return, double *sigmaE_return, int Nt, int Nw0, int Nb, int N
       deltaNw = Nw_max - Nw;
       if (sum_nw > deltaNw) // što za sum_nw < -Nw_max ?
       {
+        printf("it:%d >130*Nw0; trenutni Nw: %d; za dodat: %d, deltaNw: %d\n", it, Nw, sum_nw, deltaNw);
+        for (int sklj = 0; sklj < Nw; sklj++){
+          printf("n[%d]=%d, E_L=%f\n", sklj, n_w[sklj], E_L[sklj]);
+        }
         count = 0; // <= deltaNw
         for (iw = 1; iw <= Nw; iw++) // nije dobro testirano
         {
@@ -281,6 +285,10 @@ void DMC(double *E_return, double *sigmaE_return, int Nt, int Nw0, int Nb, int N
       nw_deficit = abs(sum_nw)-nw_max_remove; // deficit šetača do 70%*Nw0
       if (sum_nw < 0 && abs(sum_nw) > nw_max_remove)
       {
+        printf("it:%d <70*Nw0; trenutni Nw: %d; za maknut: %d, nw_max_remove= %d-%d=%d\n", it, Nw, sum_nw, Nw, Nw_lower_bound, nw_max_remove);
+        for (int sklj = 0; sklj < Nw; sklj++){
+          printf("n[%d]=%d\n", sklj, n_w[sklj]);
+        }
         qsort(W_Rpw, Nw_max, sizeof(w_pairs), compareByValue); // sortira W_Rpw prema values, descending
         int count = 0;
         for (j = 0; j<Nw; j++){
