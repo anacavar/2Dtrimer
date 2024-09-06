@@ -59,10 +59,10 @@ void DMC(double *E_return, double *sigmaE_return, int Nt, int Nw0, int Nb, int N
   long idum = -1234;
   int ib, it, iw, i, j, k, l, indeks;          // indeks bloka, indeks koraka, indeks šetača, indeks čestice
   int Nw = Nw0;                                // broj šetača
-  int Nw_max = (int)(1 + percentage) * Nw0 + 1;  // početna duljina liste - zaš je točno ovdje +1 ????
-  int Nw_lower_bound = (int)((1-percentage)*Nw0); // donja granica duljine liste
-  double x[4][Nw_max], y[4][Nw_max];           // indeks čestice, indeks šetača - bar 20% više od referentnog broja šetača
-  double x_temp[4][Nw_max], y_temp[4][Nw_max]; // temporary lista
+  int Nw_max = (int)((1 + percentage) * Nw0);    // maksimalna duljina liste
+  int Nw_min = (int)((1-percentage)*Nw0);      // minimalna duljina liste
+  double x[4][Nw_max+1], y[4][Nw_max+1];       // indeks čestice, indeks šetača - bar 20% više od referentnog broja šetača
+  double x_temp[4][Nw_max+1], y_temp[4][Nw_max+1]; // temporary lista
   double r12, r23, r13;                        // udaljenosti između čestica
   double dx, dy;                               // promjene koordinata čestica
   double sigma2 = hbar2 / mass * dtau;         // varijanca
@@ -72,17 +72,17 @@ void DMC(double *E_return, double *sigmaE_return, int Nt, int Nw0, int Nb, int N
   double x_a[4], y_a[4];                       // privremena koordinata međukoraka a svake čestice u x i y smjeru (R_a^m)
   double x_b[4], y_b[4];                       // privremena koordinata međukoraka b svake čestice u x i y smjeru (R_a^m)
   double x_pw_prime[4], y_pw_prime[4];         // srednji driftni pomak
-  double E_L[Nw_max];                          // lokalna energija zadnjeg koraka svakog od šetača
-  double E_L_temp[Nw_max];                     // temporary lista
+  double E_L[Nw_max+1];                          // lokalna energija zadnjeg koraka svakog od šetača
+  double E_L_temp[Nw_max+1];                     // temporary lista
   double E_L_prime;                            // lokalna energija trenutnog koraka - placeholder za novu energiju
   double E_R;                                  // energija R koja se mijenja u svkakom koraku (za svakog šetača??)
   double E_kin_calc, E_pot_calc;               // kinetički i potencijalni dio energije
   w_pairs W_Rpw[Nw_max];                       // statistička težina
-  int n_w[Nw_max];                             // broj potomaka
+  int n_w[Nw_max+1];                             // broj potomaka
   int sum_nw;                                  // suma potomaka nastalih tijekom jednog koraka
   int nw_max_remove;                           // broj šetača koje smijemo maknuti prije nego broj padne ispod (1-percentage)*Nw0
   int nw_deficit;                              // koliko šetača se treba nadodati u slučaju da je broj pao ispod (1-percentage)*Nw0
-  int n_w_temp[Nw_max];                        // temporary lista broja potomaka
+  int n_w_temp[Nw_max+1];                        // temporary lista broja potomaka
   double SwE;                                  // = suma(srednjih E) po setacima
   double StE;                                  // = suma (srednjih E) po koracima
   double SbE;                                  // = suma (srednjih E) po blokovima
@@ -91,7 +91,8 @@ void DMC(double *E_return, double *sigmaE_return, int Nt, int Nw0, int Nb, int N
   int NbEff;                                   // efektivni indeks bloka
   int Nw_temp;                                 // temporary broj setaca
   double rand_num;                             // random broj
-  int plus_minus, deltaNw, remainder, count;                              // broj dodanih/oduzetih šetača
+  int plus_minus = 0, deltaNw, count;          // broj dodanih/oduzetih pojedinih šetača
+  float remainder;   
 #pragma endregion
 
   char batchScript[256];
@@ -225,81 +226,74 @@ void DMC(double *E_return, double *sigmaE_return, int Nt, int Nw0, int Nb, int N
         E_L_prime = E_kin_calc + E_pot_calc;
 
         // korak 8. - određivanje statističke težine W(R'_p(w)) - (E_L bez crtanog je iz prošlog koraka (stara energija), E_L' je iz trenutnog koraka (nova energija))
-        W_Rpw[iw].value = exp(-(0.5 * (E_L[iw] + E_L_prime) - E_R) * dtau); // E_R ovdje je prosjek koji se mijenja kroz simulaciju pri svakom koraku
-        W_Rpw[iw].index = iw;
+        W_Rpw[iw-1].value = exp(-(0.5 * (E_L[iw] + E_L_prime) - E_R) * dtau); // E_R ovdje je prosjek koji se mijenja kroz simulaciju pri svakom koraku
+        W_Rpw[iw-1].index = iw;
 
         // korak 9. - stohastička procjena broja potomaka
         rand_num = ran1(&idum);
 
-        // PITALA PERU, ČEKAM ODG..... zaš mi se ne umnožavaju šetači...
-        // MOŽDA MALO REGULIRAT OVAJ BROJ? KAO, AK JE ISPOD NULE ONDA POVISIT, AK JE IZNAD ONDA SMANJIT? 
-        // if ((0.5 * (E_L[iw] + E_L_prime) - E_R) * dtau > 0){
-        //   printf("smanji random\n");
-        // }
-        // if((0.5 * (E_L[iw] + E_L_prime) - E_R) * dtau < 0){
-        //   printf("povećaj random heh\n");
+        // JESMO LI ABS SURE DA IDE -1 OVDJE?? (ja fkt msm da da budući da indeksi w_pairs idu od 0, a za n_w od 1...)
+        n_w[iw] = (int)(W_Rpw[iw-1].value + rand_num); // trebalo bi uvest optimizaciju koja bi se riješila nekih od ovih šetača        
+        sum_nw += n_w[iw] - 1; // suma nadodanih
+
+        // if(E_L_prime > 10){ // kaj bih još tu htjela pratit??
+        //   printf("E_L_prime = %f; E_kin=%f; E_pot=%f; w=%f, rand=%f=> n_w[%d] = %d\n", E_L_prime, E_kin_calc, E_pot_calc, W_Rpw[iw-1].value, rand_num, iw, n_w[iw]);
         // }
 
-        n_w[iw] = (int)(W_Rpw[iw].value + rand_num); // trebalo bi uvest optimizaciju koja bi se riješila nekih od ovih šetača        
-        sum_nw += n_w[iw] - 1; // suma nadodanih
         E_L[iw] = E_L_prime;
       } // kraj petlje šetača
       
-      // ako je suma dodanih šetača veća od preostalog slobodnog prostora u listi
+      // (>130%) ako je suma dodanih šetača veća od preostalog slobodnog prostora u listi (>130%)
       deltaNw = Nw_max - Nw;
       if (sum_nw > deltaNw) // što za sum_nw < -Nw_max ?
       {
-        printf("it:%d >130*Nw0; trenutni Nw: %d; za dodat: %d, deltaNw: %d\n", it, Nw, sum_nw, deltaNw);
-        for (int sklj = 0; sklj < Nw; sklj++){
-          printf("n[%d]=%d, E_L=%f\n", sklj, n_w[sklj], E_L[sklj]);
-        }
-        count = 0; // <= deltaNw
-        for (iw = 1; iw <= Nw; iw++) // nije dobro testirano
-        {
+        // VJEROJATNO TU TREBA NEKA SOFISTICIRANIJA METODA KOJA ĆE UZETI U OBZIR KOJE WALKERE TREBA PRIORITIZIRATI!!
+        // printf("it:%d >130*Nw0; trenutni Nw: %d; Nw_max=%d; za dodat: %d, deltaNw: %d\n", it, Nw, Nw_max, sum_nw, deltaNw);
+        count = 0; 
+        for (iw = 1; iw <= Nw; iw++) 
+        { 
           if(n_w[iw] == 0) // svi koji idu u nulu moraju ići u nulu
           {
             plus_minus = -1; 
-            count += plus_minus; // ?
+            count += plus_minus;
           }
-
           if(n_w[iw] > 0){
             plus_minus = (int)((n_w[iw] - 1)*deltaNw / sum_nw); // n_w' / slobodno = n_w / suma
-            remainder = ((n_w[iw] - 1)*deltaNw) % sum_nw;
+            remainder = (float)(((n_w[iw] - 1)*deltaNw) % sum_nw )/(float)sum_nw;
             if (remainder >= 0.5){
               plus_minus += 1; // round up
             }
-            deltaNw += plus_minus;
+              count += plus_minus;
             if (count > deltaNw) 
             {
               plus_minus -= count - deltaNw; // oduzmemo razliku
               count = deltaNw; // spustimo na maskimalnu dozvoljenu popunjenost
             }
           }
-
           n_w[iw] = 1 + plus_minus; 
         }
       }
 
       // ako šetači padaju na <70%*Nw0, onda +1 optimalne šetače  
-      nw_max_remove = Nw - Nw_lower_bound; //razlika između trenutnog - 70*Nw0 (minimalnog broja) - koliko ih se maksimalno smije uništiti
+      nw_max_remove = Nw - Nw_min; //razlika između trenutnog - 70*Nw0 (minimalnog broja) - koliko ih se maksimalno smije uništiti
       nw_deficit = abs(sum_nw)-nw_max_remove; // deficit šetača do 70%*Nw0
       if (sum_nw < 0 && abs(sum_nw) > nw_max_remove)
       {
-        printf("it:%d <70*Nw0; trenutni Nw: %d; za maknut: %d, nw_max_remove= %d-%d=%d\n", it, Nw, sum_nw, Nw, Nw_lower_bound, nw_max_remove);
-        for (int sklj = 0; sklj < Nw; sklj++){
-          printf("n[%d]=%d\n", sklj, n_w[sklj]);
-        }
+        // printf("it:%d <70*Nw0; trenutni Nw: %d; za maknut: %d, nw_max_remove= %d-%d=%d\n", it, Nw, sum_nw, Nw, Nw_min, nw_max_remove);
         qsort(W_Rpw, Nw_max, sizeof(w_pairs), compareByValue); // sortira W_Rpw prema values, descending
         int count = 0;
-        for (j = 0; j<Nw; j++){
-          if(n_w[W_Rpw[j].index]>0){
-            n_w[W_Rpw[j].index]++;
-            count++;
-            if(count>=nw_deficit){
-              break;
+        while(count<nw_deficit){
+          for (j = 0; j<Nw; j++){
+            if(n_w[W_Rpw[j].index]!=0){
+              n_w[W_Rpw[j].index]++;
+              count++;
+              if(count>=nw_deficit){
+                goto exitLoops;
+              }
             }
           }
         }
+        exitLoops:;
       }
 
       // korak 11. - kopiranje potomaka R'_p(w) u novi ansambl
@@ -325,7 +319,7 @@ void DMC(double *E_return, double *sigmaE_return, int Nt, int Nw0, int Nb, int N
               }
               E_L[indeks + in] = E_L_temp[iw];
               n_w[indeks + in] = n_w_temp[iw];
-            }
+            } 
           }
           if (iw != Nw_temp) // ako nije zadnji korak
           {
@@ -399,3 +393,4 @@ double E_kin_L(double r12, double r13, double r23, double x1, double x2, double 
   double dio3 = f_ddr(r13) + f_ddr(r23) + pow(f_dr(r13) * (x1 - x3) + f_dr(r23) * (x2 - x3), 2) + pow(f_dr(r13) * (y1 - y3) + f_dr(r23) * (y2 - y3), 2);
   return -D * (dio1 + dio2 + dio3);
 }
+
