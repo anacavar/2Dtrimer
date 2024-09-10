@@ -23,16 +23,16 @@
 #define Nt_initial 1000                                  // broj koraka
 #define Nw0_initial 100                                  // početni broj šetača
 #define Nb_initial 220                                   // broj blokova
-#define NbSkip_initial 20                                 // broj prvih blokova koje preskačemo
-#define percentage 0.3                           // +/- varijacije broja šetača
-#define sigma 4 * A                              // angstrema
-#define epsilon 12 * k_B * K                     // dubina jame, u kelvinima preko boltzmannove konstante
-#define L0 30. * A                               // angstrema
-#define alpha_initial 4.55 * A                   // angstrema
-#define gamma_initial 4.77                       // eksponent u probnoj valnoj funkciji
-#define s_initial 0.3 / A                        // eksponent u probnoj valnoj funkciji A^-1
-#define mass 4. * u                              // u
-#define dtau 1.0 * pow(10, -3) / K               // korak vremena ∆τ (10^(-6) 1/mK)
+#define NbSkip_initial 20                                // broj prvih blokova koje preskačemo
+#define percentage 0.3                                   // +/- varijacije broja šetača
+#define sigma 4 * A                                      // angstrema
+#define epsilon 12 * k_B * K                             // dubina jame, u kelvinima preko boltzmannove konstante
+#define L0 30. * A                                       // angstrema
+#define alpha_initial 4.55 * A                           // angstrema
+#define gamma_initial 4.77                               // eksponent u probnoj valnoj funkciji
+#define s_initial 0.3 / A                                // eksponent u probnoj valnoj funkciji A^-1
+#define mass 4. * u                                      // u
+#define dtau 1.0 * pow(10, -3) / K                       // korak vremena ∆τ (10^(-6) 1/mK)
 
 // deklaracija funkcija
 double U_LJ(double);                                                                    // Lennard-Jonesov potencijal
@@ -65,24 +65,26 @@ void DMC(double *E_return, double *sigmaE_return, int Nt, int Nw0, int Nb, int N
   double x_temp[4][Nw_max+1], y_temp[4][Nw_max+1]; // temporary lista
   double r12, r23, r13;                        // udaljenosti između čestica
   double dx, dy;                               // promjene koordinata čestica
-  double sigma2 = hbar2 / mass * dtau;         // varijanca
+  double sigma2 = hbar2 / mass * dtau;         // varijanca ???
+  double stand_dev = sqrt(sigma2);             // standardna devijacija
   double Fq_x_prime[4], Fq_y_prime[4];         // x i y komponente driftne (kvantne) sile
   double Fqa_x[4], Fqa_y[4];                   // privremena driftna sila međukoraka a u x i y smjeru (Fqa) za svaku od čestica
   double Fqb_x[4], Fqb_y[4];                   // privremena driftna sila međukoraka b u x i y smjeru (Fqb) za svaku od čestica
   double x_a[4], y_a[4];                       // privremena koordinata međukoraka a svake čestice u x i y smjeru (R_a^m)
   double x_b[4], y_b[4];                       // privremena koordinata međukoraka b svake čestice u x i y smjeru (R_a^m)
   double x_pw_prime[4], y_pw_prime[4];         // srednji driftni pomak
-  double E_L[Nw_max+1];                          // lokalna energija zadnjeg koraka svakog od šetača
-  double E_L_temp[Nw_max+1];                     // temporary lista
+  double E_L[Nw_max+1];                        // lokalna energija zadnjeg koraka svakog od šetača
+  double E_L_temp[Nw_max+1];                   // temporary lista
   double E_L_prime;                            // lokalna energija trenutnog koraka - placeholder za novu energiju
   double E_R;                                  // energija R koja se mijenja u svkakom koraku (za svakog šetača??)
   double E_kin_calc, E_pot_calc;               // kinetički i potencijalni dio energije
   w_pairs W_Rpw[Nw_max];                       // statistička težina
-  int n_w[Nw_max+1];                             // broj potomaka
+  double W_Rpw_value;                          // statistička težina
+  int n_w[Nw_max+1];                           // broj potomaka
   int sum_nw;                                  // suma potomaka nastalih tijekom jednog koraka
   int nw_max_remove;                           // broj šetača koje smijemo maknuti prije nego broj padne ispod (1-percentage)*Nw0
   int nw_deficit;                              // koliko šetača se treba nadodati u slučaju da je broj pao ispod (1-percentage)*Nw0
-  int n_w_temp[Nw_max+1];                        // temporary lista broja potomaka
+  int n_w_temp[Nw_max+1];                      // temporary lista broja potomaka
   double SwE;                                  // = suma(srednjih E) po setacima
   double StE;                                  // = suma (srednjih E) po koracima
   double SbE;                                  // = suma (srednjih E) po blokovima
@@ -93,6 +95,7 @@ void DMC(double *E_return, double *sigmaE_return, int Nt, int Nw0, int Nb, int N
   double rand_num;                             // random broj
   int plus_minus = 0, deltaNw, count;          // broj dodanih/oduzetih pojedinih šetača
   float remainder;   
+  double fddr_value[3], fdr_value[3];
 #pragma endregion
 
   char batchScript[256];
@@ -101,13 +104,15 @@ void DMC(double *E_return, double *sigmaE_return, int Nt, int Nw0, int Nb, int N
 
   printf("\nDMC:\n Nt=%d; Nw0=%d; Nb=%d; NbSkip=%d\n", Nt, Nw0, Nb, NbSkip);
 
-  FILE *data, *VMC_coordinates;
+  FILE *data, *VMC_coordinates, *data_log;
   data = fopen("data.txt", "w");
   VMC_coordinates = fopen("../VMC/data_coordinates.txt", "r");  
   if (VMC_coordinates == NULL) {
     printf("Error opening VMC_coordinates file.\n");
     exit(1);
   }
+
+  data_log = fopen("data_log_DMC.txt", "w");
 
   // inicijalizacija liste radi kasnijeg sortiranja
   for (i = 0; i < Nw_max; i++)
@@ -145,9 +150,9 @@ void DMC(double *E_return, double *sigmaE_return, int Nt, int Nw0, int Nb, int N
       {
         // korak 1. - gaussov pomak (Ra)
         for (k = 1; k <= 3; k++) // po česticama
-        {
-          dx = gasdev(&idum) * sigma2; // množi sa varijancom (sigma na kvadrat)
-          dy = gasdev(&idum) * sigma2; 
+        { 
+          dx = gasdev(&idum) * stand_dev; // množi sa standardnom devijacijom
+          dy = gasdev(&idum) * stand_dev; 
           x_a[k] = x[k][iw] + dx;      // spremamo privremeno, x koordinatu za svaku česticu ovog šetača u ovom koraku
           y_a[k] = y[k][iw] + dy;      // spremamo privremeno, y koordinatu za svaku česticu ovog šetača u ovom koraku
         }
@@ -226,19 +231,30 @@ void DMC(double *E_return, double *sigmaE_return, int Nt, int Nw0, int Nb, int N
         E_L_prime = E_kin_calc + E_pot_calc;
 
         // korak 8. - određivanje statističke težine W(R'_p(w)) - (E_L bez crtanog je iz prošlog koraka (stara energija), E_L' je iz trenutnog koraka (nova energija))
-        W_Rpw[iw-1].value = exp(-(0.5 * (E_L[iw] + E_L_prime) - E_R) * dtau); // E_R ovdje je prosjek koji se mijenja kroz simulaciju pri svakom koraku
+        W_Rpw_value = exp(-(0.5 * (E_L[iw] + E_L_prime) - E_R) * dtau);
+        W_Rpw[iw-1].value = W_Rpw_value; // E_R ovdje je prosjek koji se mijenja kroz simulaciju pri svakom koraku
         W_Rpw[iw-1].index = iw;
 
         // korak 9. - stohastička procjena broja potomaka
         rand_num = ran1(&idum);
-
-        // JESMO LI ABS SURE DA IDE -1 OVDJE?? (ja fkt msm da da budući da indeksi w_pairs idu od 0, a za n_w od 1...)
-        n_w[iw] = (int)(W_Rpw[iw-1].value + rand_num); // trebalo bi uvest optimizaciju koja bi se riješila nekih od ovih šetača        
+        n_w[iw] = (int)(W_Rpw_value + rand_num); // trebalo bi uvest optimizaciju koja bi se riješila nekih od ovih šetača        
         sum_nw += n_w[iw] - 1; // suma nadodanih
 
         // if(E_L_prime > 10){ // kaj bih još tu htjela pratit??
         //   printf("E_L_prime = %f; E_kin=%f; E_pot=%f; w=%f, rand=%f=> n_w[%d] = %d\n", E_L_prime, E_kin_calc, E_pot_calc, W_Rpw[iw-1].value, rand_num, iw, n_w[iw]);
         // }
+
+        fdr_value[1] = f_dr(r12);
+        fdr_value[2] = f_dr(r13);
+        fdr_value[3] = f_dr(r23);
+        fddr_value[1] = f_ddr(r12);
+        fddr_value[2] = f_ddr(r13);
+        fddr_value[3] = f_ddr(r23);
+
+        if(ib==150 && it==500){
+          fprintf(data_log, "iw:%d\tE=%f(p:%f) => w_pr=%f\tE_pot=%f\tE_kin=%f\tr12=%6.5f(fdr=%f; fddr=%f); r13=%6.5f(fdr=%f; fddr=%f); r23=%6.5f(fdr=%f; fddr=%f)\n", iw, E_L_prime, E_L[iw], W_Rpw_value, E_pot_calc, E_kin_calc, r12, fdr_value[0], fddr_value[0], r13, fdr_value[1], fddr_value[1], r23, fdr_value[2], fddr_value[2]);
+        }
+
 
         E_L[iw] = E_L_prime;
       } // kraj petlje šetača
@@ -297,41 +313,41 @@ void DMC(double *E_return, double *sigmaE_return, int Nt, int Nw0, int Nb, int N
       }
 
       // korak 11. - kopiranje potomaka R'_p(w) u novi ansambl
-      if (Nw >= (1 - percentage) * Nw0) // ako broj šetača nije pao ispod 70% početnog broja šetača
+      // if (Nw >= (1 - percentage) * Nw0) // ako broj šetača nije pao ispod 70% početnog broja šetača
+      // { šta mi je trebao ovaj glupi uvjet????
+      memcpy(x_temp, x, sizeof(x));
+      memcpy(y_temp, y, sizeof(y));
+      memcpy(E_L_temp, E_L, sizeof(E_L));
+      memcpy(n_w_temp, n_w, sizeof(n_w));
+      Nw_temp = Nw;
+      Nw = 0;
+      indeks = 1;
+      for (iw = 1; iw <= Nw_temp; iw++)
       {
-        memcpy(x_temp, x, sizeof(x));
-        memcpy(y_temp, y, sizeof(y));
-        memcpy(E_L_temp, E_L, sizeof(E_L));
-        memcpy(n_w_temp, n_w, sizeof(n_w));
-        Nw_temp = Nw;
-        Nw = 0;
-        indeks = 1;
-        for (iw = 1; iw <= Nw_temp; iw++)
+        if (n_w_temp[iw] != 0) // ako je n = 0 onda taj šetač biva uništen (preskačemo ga)
         {
-          if (n_w_temp[iw] != 0) // ako je n = 0 onda taj šetač biva uništen (preskačemo ga)
+          for (int in = 0; in < n_w_temp[iw]; in++)
           {
-            for (int in = 0; in < n_w_temp[iw]; in++)
+            for (k = 1; k <= 3; k++)
             {
-              for (k = 1; k <= 3; k++)
-              {
-                x[k][indeks + in] = x_temp[k][iw];
-                y[k][indeks + in] = y_temp[k][iw];
-              }
-              E_L[indeks + in] = E_L_temp[iw];
-              n_w[indeks + in] = n_w_temp[iw];
-            } 
-          }
-          if (iw != Nw_temp) // ako nije zadnji korak
-          {
-            indeks += n_w_temp[iw];
-          }
-          else if (iw == Nw_temp && n_w_temp[iw] == 0)
-          {
-            indeks = indeks - 1; // brijem ide -1 jer kao ne trebam se dalje pomaknut od zadnjeg indeksa
-          }
+              x[k][indeks + in] = x_temp[k][iw];
+              y[k][indeks + in] = y_temp[k][iw];
+            }
+            E_L[indeks + in] = E_L_temp[iw];
+            n_w[indeks + in] = n_w_temp[iw];
+          } 
         }
-        Nw = indeks; 
+        if (iw != Nw_temp) // ako nije zadnji korak
+        {
+          indeks += n_w_temp[iw];
+        }
+        else if (iw == Nw_temp && n_w_temp[iw] == 0)
+        {
+          indeks = indeks - 1; // brijem ide -1 jer kao ne trebam se dalje pomaknut od zadnjeg indeksa
+        }
       }
+      Nw = indeks; 
+      // }
 
       for(iw = 1; iw<=Nw; iw++){
         SwE += E_L[iw];
@@ -361,6 +377,7 @@ void DMC(double *E_return, double *sigmaE_return, int Nt, int Nw0, int Nb, int N
   *sigmaE_return = sigmaE;
   fclose(data);
   fclose(VMC_coordinates);
+  fclose(data_log);
 }
 
 double f_dr(double r)

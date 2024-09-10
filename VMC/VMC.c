@@ -77,14 +77,17 @@ void VMC(double *E_return, double *sigmaE_return, int Nt, int Nw, int Nb, int Nb
     double max_r12 = 100, max_r13 = 100, max_angle = 3.20;           // max_angle je pi, koje su dobre vrijednosti max_r12 i max_r13?
     // što ako stavim veći max_angle, recimo 2pi?
     int n, m; // indeksi za distribucije
+    double E_kin_calc, E_pot_calc;
+    double fdr_value[3], fddr_value[3];
 #pragma endregion
 
-    FILE *data, *data_angles, *data_r12, *data_r12_r13, *data_coordinates;
+    FILE *data, *data_angles, *data_r12, *data_r12_r13, *data_coordinates, *data_log;
     data = fopen("data.txt", "w");
     data_angles = fopen("data_angles.txt", "w");
     data_r12 = fopen("data_r12.txt", "w");
     data_r12_r13 = fopen("data_r12_r13.txt", "w");
     data_coordinates = fopen("data_coordinates.txt", "w");
+    data_log = fopen("data_log_VMC.txt", "w");
 
     // inicijalizacija koordinata čestica gdje je gustoća Psi*Psi znacajna
     for (iw = 1; iw <= Nw; iw++) // po šetačima
@@ -164,8 +167,23 @@ void VMC(double *E_return, double *sigmaE_return, int Nt, int Nw, int Nb, int Nb
                 y1 = y[1][iw];
                 y2 = y[2][iw];
                 y3 = y[3][iw];
-                E_L[iw] = E_kin_L(r12, r13, r23, x1, x2, x3, y1, y2, y3) + E_pot_L(r12, r13, r23); // kinetički dio + potencijalni dio
+
+                E_kin_calc = E_kin_L(r12, r13, r23, x1, x2, x3, y1, y2, y3);
+                E_pot_calc = E_pot_L(r12, r13, r23);
+                E_L[iw] = E_kin_calc + E_pot_calc; // kinetički dio + potencijalni dio
                 SwE = SwE + E_L[iw];
+
+                fdr_value[0] = f_dr(r12); 
+                fdr_value[1] = f_dr(r13); 
+                fdr_value[2] = f_dr(r23); 
+                fddr_value[0] = f_ddr(r12); 
+                fddr_value[1] = f_ddr(r13); 
+                fddr_value[2] = f_ddr(r23); 
+
+                // data log
+                if(ib==150 && it==500){
+                    fprintf(data_log, "iw:%d\tE=%f\tE_pot=%f\tE_kin=%f\tr12=%f(fdr=%f; fddr=%f); r13=%f(fdr=%f; fddr=%f); r23=%f(fdr=%f; fddr=%f)\n", iw, E_L[iw], E_pot_calc, E_kin_calc, r12, fdr_value[0], fddr_value[0], r13, fdr_value[1], fddr_value[1], r23, fdr_value[2], fddr_value[2]);
+                }
 
                 // ubacujemo svakog šetača u svakom koraku u distribucije ako je simulacija stabilizirana (NbSkip blokova preskočeno)
                 if (ib > NbSkip)
@@ -242,6 +260,7 @@ void VMC(double *E_return, double *sigmaE_return, int Nt, int Nw, int Nb, int Nb
     fclose(data_r12);
     fclose(data_r12_r13);
     fclose(data_coordinates);
+    fclose(data_log);
 }
 
 // probna valna funkcija
