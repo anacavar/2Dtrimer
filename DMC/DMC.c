@@ -131,7 +131,9 @@ void DMC(double *E_return, double *sigmaE_return, int Nt, int Nw0, int Nb, int N
     r12 = sqrt(pow((x[2][iw] - x[1][iw]), 2) + pow((y[2][iw] - y[1][iw]), 2));
     r23 = sqrt(pow((x[3][iw] - x[2][iw]), 2) + pow((y[3][iw] - y[2][iw]), 2));
     r13 = sqrt(pow((x[3][iw] - x[1][iw]), 2) + pow((y[3][iw] - y[1][iw]), 2));
-    E_L[iw] = E_kin_L(r12, r13, r23, x[1][iw], x[2][iw], x[3][iw], y[1][iw], y[2][iw], y[3][iw]) + E_pot_L(r12, r13, r23);
+    E_kin_calc = E_kin_L(r12, r13, r23, x[1][iw], x[2][iw], x[3][iw], y[1][iw], y[2][iw], y[3][iw]);
+    E_pot_calc = E_pot_L(r12, r13, r23);
+    E_L[iw] = E_kin_calc + E_pot_calc;
     SwE += E_L[iw];
   }
   E_R = SwE / Nw; // prosječna energija po šetačima = -5.271490
@@ -226,6 +228,9 @@ void DMC(double *E_return, double *sigmaE_return, int Nt, int Nw0, int Nb, int N
         r12 = sqrt(pow((x_pw_prime[2] - x_pw_prime[1]), 2) + pow((y_pw_prime[2] - y_pw_prime[1]), 2));
         r23 = sqrt(pow((x_pw_prime[3] - x_pw_prime[2]), 2) + pow((y_pw_prime[3] - y_pw_prime[2]), 2));
         r13 = sqrt(pow((x_pw_prime[3] - x_pw_prime[1]), 2) + pow((y_pw_prime[3] - y_pw_prime[1]), 2));
+        // if(it==100 && iw==50){
+        //   printf("r12=%f; r13=%f; r23=%f => fdr=%f, fddr=%f\n", r12, r13, r23, f_dr(r12), f_ddr(r12));
+        // }
         E_kin_calc = E_kin_L(r12, r13, r23, x_pw_prime[1], x_pw_prime[2], x_pw_prime[3], y_pw_prime[1], y_pw_prime[2], y_pw_prime[3]);
         E_pot_calc = E_pot_L(r12, r13, r23);
         E_L_prime = E_kin_calc + E_pot_calc;
@@ -244,15 +249,15 @@ void DMC(double *E_return, double *sigmaE_return, int Nt, int Nw0, int Nb, int N
         //   printf("E_L_prime = %f; E_kin=%f; E_pot=%f; w=%f, rand=%f=> n_w[%d] = %d\n", E_L_prime, E_kin_calc, E_pot_calc, W_Rpw[iw-1].value, rand_num, iw, n_w[iw]);
         // }
 
-        fdr_value[1] = f_dr(r12);
-        fdr_value[2] = f_dr(r13);
-        fdr_value[3] = f_dr(r23);
-        fddr_value[1] = f_ddr(r12);
-        fddr_value[2] = f_ddr(r13);
-        fddr_value[3] = f_ddr(r23);
+        fdr_value[0] = f_dr(r12);
+        fdr_value[1] = f_dr(r13);
+        fdr_value[2] = f_dr(r23);
+        fddr_value[0] = f_ddr(r12);
+        fddr_value[1] = f_ddr(r13);
+        fddr_value[2] = f_ddr(r23);
 
         if(ib==150 && it==500){
-          fprintf(data_log, "iw:%d\tE=%f(p:%f) => w_pr=%f\tE_pot=%f\tE_kin=%f\tr12=%6.5f(fdr=%f; fddr=%f); r13=%6.5f(fdr=%f; fddr=%f); r23=%6.5f(fdr=%f; fddr=%f)\n", iw, E_L_prime, E_L[iw], W_Rpw_value, E_pot_calc, E_kin_calc, r12, fdr_value[0], fddr_value[0], r13, fdr_value[1], fddr_value[1], r23, fdr_value[2], fddr_value[2]);
+          fprintf(data_log, "iw:%d\tE=%f(p:%f) => w_pr=%f\tE_pot=%f\tE_kin=%f\tr12=%f(fdr=%f; fddr=%f); r13=%f(fdr=%f; fddr=%f); r23=%f(fdr=%f; fddr=%f)\n", iw, E_L_prime, E_L[iw], W_Rpw_value, E_pot_calc, E_kin_calc, r12, fdr_value[0], fddr_value[0], r13, fdr_value[1], fddr_value[1], r23, fdr_value[2], fddr_value[2]);
         }
 
 
