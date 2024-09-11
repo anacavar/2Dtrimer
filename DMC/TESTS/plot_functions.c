@@ -3,13 +3,13 @@
 #include <math.h>
 
 #define N_POINTS 1000  // Broj točaka
-#define X_MIN 0.1        // Početak intervala
+#define X_MIN 0.1      // Početak intervala
 #define X_MAX 101      // Kraj intervala
 
 // konstante
-#define k_B 1.                                         // boltzmannova konstanta
-#define A 1.                                           // angstrem
-#define K 1.                                           // kelvin
+#define k_B 1.                 // boltzmannova konstanta
+#define A 1.                   // angstrem
+#define K 1.                   // kelvin
 
 // za Lennard-Jones:
 #define sigma 4 * A            // angstrema

@@ -8,8 +8,8 @@ set xzeroaxis
 set yzeroaxis
 plot 'output.txt' u 1:2 w l title 'Lennard-Jones potencijal', 'output.txt' u 1:3 w l title 'korelacijska funkcija'
 
-set xrange[-1:50]
-set yrange[-20:20]
+set xrange[-1:20]
+set yrange[-1:1]
 set xzeroaxis
 set yzeroaxis
 set output 'fdr_fddr.png'
