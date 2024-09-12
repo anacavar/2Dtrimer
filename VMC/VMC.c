@@ -188,7 +188,7 @@ void VMC(double *E_return, double *sigmaE_return, int Nt, int Nw, int Nb, int Nb
                 // ubacujemo svakog šetača u svakom koraku u distribucije ako je simulacija stabilizirana (NbSkip blokova preskočeno)
                 if (ib > NbSkip)
                 {
-                    n = (int)(r12 / max_r12 * 100); // puca jer ih nema tolko unutra u polju - podijelit s nekim reasonable brojem, mislim, i ako je veće od toga valjda se sam zanemari..
+                    n = (int)(r12 / max_r12 * 100); 
                     if (n <= N_r12_dist)
                         r12_dist[n]++;
                     m = (int)(r13 / max_r13 * 100);

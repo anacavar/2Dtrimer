@@ -20,10 +20,10 @@
 #define hbar2_si 1.112121717 * pow(10, -68)            // (Js)^2 = (m2kg/s)^2
 
 // POČETNE VRIJEDNOSTI
-#define Nt_initial 1000                                  // broj koraka
-#define Nw0_initial 100                                  // početni broj šetača
-#define Nb_initial 220                                   // broj blokova
-#define NbSkip_initial 20                                // broj prvih blokova koje preskačemo
+// #define Nt_initial 1000                                  // broj koraka
+// #define Nw0_initial 100                                  // početni broj šetača
+// #define Nb_initial 220                                   // broj blokova
+// #define NbSkip_initial 20                                // broj prvih blokova koje preskačemo
 #define percentage 0.3                                   // +/- varijacije broja šetača
 #define sigma 4 * A                                      // angstrema
 #define epsilon 12 * k_B * K                             // dubina jame, u kelvinima preko boltzmannove konstante
@@ -33,6 +33,8 @@
 #define s_initial 0.3 / A                                // eksponent u probnoj valnoj funkciji A^-1
 #define mass 4. * u                                      // u
 #define dtau 1.0 * pow(10, -3) / K                       // korak vremena ∆τ (10^(-6) 1/mK)
+#define N_r12_dist 100         // broj binova za distribuciju r12
+#define N_angles_dist 100      // broj binova za distribuciju kuteva
 
 // deklaracija funkcija
 double U_LJ(double);                                                                    // Lennard-Jonesov potencijal
@@ -94,8 +96,12 @@ void DMC(double *E_return, double *sigmaE_return, int Nt, int Nw0, int Nb, int N
   int Nw_temp;                                 // temporary broj setaca
   double rand_num;                             // random broj
   int plus_minus = 0, deltaNw, count;          // broj dodanih/oduzetih pojedinih šetača
-  float remainder;   
-  double fddr_value[3], fdr_value[3];
+  float remainder;                             // ostatak dijeljenja
+  double fddr_value[3], fdr_value[3];          // radi logiranja vrijedosti f_dr i f_ddr
+  double max_r12 = 10000, max_angle = 3.20;      // max_angle je pi, koje su dobre vrijednosti max_r12 i max_r13?
+  double r12_dist[N_r12_dist + 1], angles_dist[N_angles_dist + 1]; // distribucija duljina r12 i kuteva
+  int n;                                    // indeksi za distribucije
+  double angle;                                                    // kut između r12 i r13 trimera (za svakog šetača posebno)
 #pragma endregion
 
   char batchScript[256];
@@ -104,7 +110,7 @@ void DMC(double *E_return, double *sigmaE_return, int Nt, int Nw0, int Nb, int N
 
   printf("\nDMC:\n Nt=%d; Nw0=%d; Nb=%d; NbSkip=%d\n", Nt, Nw0, Nb, NbSkip);
 
-  FILE *data, *VMC_coordinates, *data_log;
+  FILE *data, *VMC_coordinates, *data_log, *data_r12, *data_angles, *data_coordinates;
   data = fopen("data.txt", "w");
   VMC_coordinates = fopen("../VMC/data_coordinates.txt", "r");  
   if (VMC_coordinates == NULL) {
@@ -113,6 +119,10 @@ void DMC(double *E_return, double *sigmaE_return, int Nt, int Nw0, int Nb, int N
   }
 
   data_log = fopen("data_log_DMC.txt", "w");
+  data_angles = fopen("data_angles_DMC.txt", "w");
+  data_r12 = fopen("data_r12_DMC.txt", "w");
+  data_coordinates = fopen("data_coordinates_DMC", "w");
+
 
   // inicijalizacija liste radi kasnijeg sortiranja
   for (i = 0; i < Nw_max; i++)
@@ -260,7 +270,6 @@ void DMC(double *E_return, double *sigmaE_return, int Nt, int Nw0, int Nb, int N
           fprintf(data_log, "iw:%d\tE=%f(p:%f) => w_pr=%f\tE_pot=%f\tE_kin=%f\tr12=%f(fdr=%f; fddr=%f); r13=%f(fdr=%f; fddr=%f); r23=%f(fdr=%f; fddr=%f)\n", iw, E_L_prime, E_L[iw], W_Rpw_value, E_pot_calc, E_kin_calc, r12, fdr_value[0], fddr_value[0], r13, fdr_value[1], fddr_value[1], r23, fdr_value[2], fddr_value[2]);
         }
 
-
         E_L[iw] = E_L_prime;
       } // kraj petlje šetača
       
@@ -350,6 +359,18 @@ void DMC(double *E_return, double *sigmaE_return, int Nt, int Nw0, int Nb, int N
         {
           indeks = indeks - 1; // brijem ide -1 jer kao ne trebam se dalje pomaknut od zadnjeg indeksa
         }
+
+        // // ubacujemo svakog šetača u svakom koraku u distribucije ako je simulacija stabilizirana (NbSkip blokova preskočeno)
+        // if (ib > NbSkip)
+        // {
+        //   n = (int)(r12 / max_r12 * 100); // puca jer ih nema tolko unutra u polju - podijelit s nekim reasonable brojem, mislim, i ako je veće od toga valjda se sam zanemari..
+        //   if (n <= N_r12_dist)
+        //     r12_dist[n]++;          
+        //   angle = acos((r23 * r23 - r12 * r12 - r13 * r13) / (-2 * r12 * r13)); // double checkaj ovu formulu
+        //   n = (int)(angle / max_angle * 100);                                   // podijelit tipa s pi mislim
+        //   if (n <= N_angles_dist)
+        //     angles_dist[n]++;
+        // }
       }
       Nw = indeks; 
       // }
@@ -365,6 +386,7 @@ void DMC(double *E_return, double *sigmaE_return, int Nt, int Nw0, int Nb, int N
       }
       E_R = SwE / Nw; // ovo je srednja vrijednost energije po svim šetačima, računamo za svaki korak
     } // kraj petlje koraka
+
     if (ib > NbSkip)
     {
       SbE += StE / Nt;
@@ -374,15 +396,48 @@ void DMC(double *E_return, double *sigmaE_return, int Nt, int Nw0, int Nb, int N
     }
   } // kraj petlje blokova
 
+  // ubacujemo svakog šetača u svakom koraku u distribucije ako je simulacija stabilizirana (NbSkip blokova preskočeno)
+  for (iw = 1; iw < Nw; iw++)
+  {
+    r12 = sqrt(pow((x[2][iw] - x[1][iw]), 2) + pow((y[2][iw] - y[1][iw]), 2));
+    r23 = sqrt(pow((x[3][iw] - x[2][iw]), 2) + pow((y[3][iw] - y[2][iw]), 2));
+    r13 = sqrt(pow((x[3][iw] - x[1][iw]), 2) + pow((y[3][iw] - y[1][iw]), 2));
+    n = (int)(r12 / max_r12 * 100); // puca jer ih nema tolko unutra u polju - podijelit s nekim reasonable brojem, mislim, i ako je veće od toga valjda se sam zanemari..
+    if (n <= N_r12_dist)
+      r12_dist[n]++;          
+    angle = acos((r23 * r23 - r12 * r12 - r13 * r13) / (-2 * r12 * r13)); // double checkaj ovu formulu
+    n = (int)(angle / max_angle * 100);                                   // podijelit tipa s pi mislim
+    if (n <= N_angles_dist)
+      angles_dist[n]++;
+  }
+
+  // zapiši konačne koordinate svih šetača u datoteku
+  for (iw = 1; iw <= Nw; iw++)
+  {
+    fprintf(data_coordinates, "%f\t%f\t%f\t%f\t%f\t%f\n", x[1][iw], y[1][iw], x[2][iw], y[2][iw], x[3][iw], y[3][iw]);
+  }
+  for (i = 1; i <= N_r12_dist; i++) // po binovima raspodjele r12
+  {
+    fprintf(data_r12, "%f\t%f\t\n", (double)i * max_r12 / 100.0, r12_dist[i]);
+  }
+  for (i = 1; i <= N_angles_dist; i++) // po binovima raspodjele kutova
+  {
+    fprintf(data_angles, "%f\t%f\t\n", (double)i * max_angle / 100, angles_dist[i]);
+  }
+
   AE = SbE / NbEff;
   sigmaE = sqrt(abs(SbE2 / NbEff - AE * AE) / (NbEff - 1.));
   printf(" alpha = %f, gamma = %f, s = %f\n", alpha, gamma_var, s);
   printf(" E = %8.5e +- %1.5e \n\n", AE, sigmaE);
   *E_return = AE;
   *sigmaE_return = sigmaE;
+
   fclose(data);
   fclose(VMC_coordinates);
   fclose(data_log);
+  fclose(data_angles);
+  fclose(data_r12);
+  fclose(data_coordinates);
 }
 
 double f_dr(double r)
