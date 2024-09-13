@@ -9,16 +9,17 @@ int main(int argc, char *argv[])
   double dg;
   double ds;
   double da;
-  double gamma_min = 4.5, gamma_max = 4.6;
-  double alpha_min = 4.54, alpha_max = 4.75;
+  double gamma_min = 4.45, gamma_max = 4.55;
+  double alpha_min = 4.55, alpha_max = 4.65;
   double s_min = 0.2, s_max = 0.4;
   double E, sigmaE;
   int N = 5;
   dg = (gamma_max - gamma_min) / N;
   ds = (s_max - s_min) / N;
   da = (alpha_max - alpha_min) / N;
-  FILE *dataEs;
+  FILE *dataEs, *parameters_log;
   dataEs = fopen("dataEs.txt", "w");
+  parameters_log = fopen("parameters_log.txt", "w");
 
   if(argc == 5){
     int Nt = atoi(argv[1]), Nw = atoi(argv[2]), Nb = atoi(argv[3]), NbSkip = atoi(argv[4]);
@@ -32,7 +33,9 @@ int main(int argc, char *argv[])
       for (int ia = 0; ia < N; ia++)
       {
         alpha = alpha_min + ia * da;
+        fprintf(parameters_log, "%d\tg=%f\ta=%f\n", ig*N+ia+1, gamma_var, alpha);
         // izvrti program..
+        printf("%d. alpha=%f; gamma=%f; s=%f\n", ig*N+ia+1, alpha, gamma_var, s);
         VMC(&E, &sigmaE, Nt, Nw, Nb, NbSkip);
         fprintf(dataEs, "%f\t%f\t%f\t%f\n", E, sigmaE, alpha, gamma_var);
       }
@@ -41,6 +44,7 @@ int main(int argc, char *argv[])
   else if(argc == 1){
     printf("Started with default parameters\n");
     int Nt = 1000, Nw = 100, Nb = 220, NbSkip = 20;
+    s = s_initial;
     for (int ig = 0; ig < N; ig++)
     {
       // za zadani s, za svaki gamma, ili gamma? variraš alpha...
@@ -49,6 +53,7 @@ int main(int argc, char *argv[])
       {
         alpha = alpha_min + ia * da;
         // izvrti program..
+        printf("%d. alpha=%f; gamma=%f; s=%f\n", ig*N+ia+1, alpha, gamma_var, s);
         VMC(&E, &sigmaE, Nt, Nw, Nb, NbSkip);
         fprintf(dataEs, "%f\t%f\t%f\t%f\n", E, sigmaE, alpha, gamma_var);
       }
@@ -59,4 +64,5 @@ int main(int argc, char *argv[])
   }
 
   fclose(dataEs);
+  fclose(parameters_log);
 }

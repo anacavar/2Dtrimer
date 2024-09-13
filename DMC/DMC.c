@@ -102,6 +102,7 @@ void DMC(double *E_return, double *sigmaE_return, int Nt, int Nw0, int Nb, int N
   double r12_dist[N_r12_dist + 1], angles_dist[N_angles_dist + 1]; // distribucija duljina r12 i kuteva
   int n;                                    // indeksi za distribucije
   double angle;                                                    // kut između r12 i r13 trimera (za svakog šetača posebno)
+  double x_acos;
 #pragma endregion
 
   char batchScript[256];
@@ -392,7 +393,11 @@ void DMC(double *E_return, double *sigmaE_return, int Nt, int Nw0, int Nb, int N
     n = (int)(r12 / max_r12 * 100); // puca jer ih nema tolko unutra u polju - podijelit s nekim reasonable brojem, mislim, i ako je veće od toga valjda se sam zanemari..
     if (n <= N_r12_dist)
       r12_dist[n]++;          
-    angle = acos((r23 * r23 - r12 * r12 - r13 * r13) / (-2 * r12 * r13)); // double checkaj ovu formulu
+
+    x_acos = (r23 * r23 - r12 * r12 - r13 * r13) / (-2 * r12 * r13);
+    if(x_acos > 1) x_acos = 1;
+    if(x_acos < -1) x_acos = -1;
+    angle = acos(x_acos); // double checkaj ovu formulu
     n = (int)(angle / max_angle * 100);                                   // podijelit tipa s pi mislim
     if (n <= N_angles_dist)
       angles_dist[n]++;
@@ -413,7 +418,7 @@ void DMC(double *E_return, double *sigmaE_return, int Nt, int Nw0, int Nb, int N
   }
 
   AE = SbE / NbEff;
-  sigmaE = sqrt(abs(SbE2 / NbEff - AE * AE) / (NbEff - 1.));
+  sigmaE = sqrt(fabs(SbE2 / NbEff - AE * AE) / (NbEff - 1.));
   printf(" alpha = %f, gamma = %f, s = %f\n", alpha, gamma_var, s);
   printf(" E = %8.5e +- %1.5e \n\n", AE, sigmaE);
   *E_return = AE;

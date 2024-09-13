@@ -79,6 +79,7 @@ void VMC(double *E_return, double *sigmaE_return, int Nt, int Nw, int Nb, int Nb
     int n, m; // indeksi za distribucije
     double E_kin_calc, E_pot_calc;
     double fdr_value[3], fddr_value[3];
+    double x_acos;
 #pragma endregion
 
     FILE *data, *data_angles, *data_r12, *data_r12_r13, *data_coordinates, *data_log;
@@ -120,7 +121,6 @@ void VMC(double *E_return, double *sigmaE_return, int Nt, int Nw, int Nb, int Nb
                 {
                     dx = (ran1(&idum) * 2 - 1) * dxyMax;
                     dy = (ran1(&idum) * 2 - 1) * dxyMax;
-                    // TREBAM LI OVDJE RUBNE UVJETE DA NE IZŠETAJU IZ KUTIJE?? MOŽDA SU ZATO KUTEVI VELIKI, JER SE NEKA ČESTICA ONAK POMAKNE U KS
                     x_old[k] = x[k][iw];
                     y_old[k] = y[k][iw];
                     x[k][iw] += dx;
@@ -194,11 +194,19 @@ void VMC(double *E_return, double *sigmaE_return, int Nt, int Nw, int Nb, int Nb
                     m = (int)(r13 / max_r13 * 100);
                     if (n <= N_r12_r13_dist && m <= N_r12_r13_dist)
                         r12_r13_dist[n][m]++;
-                    angle = acos((r23 * r23 - r12 * r12 - r13 * r13) / (-2 * r12 * r13)); // double checkaj ovu formulu
-                    n = (int)(angle / max_angle * 100);                                   // podijelit tipa s pi mislim
-                    if (n <= N_angles_dist)
+
+                    x_acos = (r23 * r23 - r12 * r12 - r13 * r13) / (-2 * r12 * r13);
+                    if(x_acos > 1) x_acos = 1;
+                    if(x_acos < -1) x_acos = -1;
+
+                    angle = acos(x_acos); 
+                    n = (int)(angle / max_angle * 100);  // podijelit tipa s pi mislim
+
+                    if (n <= N_angles_dist) 
                         angles_dist[n]++;
                 }
+                // -179.7935306576651
+                // -179.7935306576649
             } // kraj petlje šetača
             // akumulacija podataka nakon stabilizacije
             if (ib > NbSkip)
@@ -249,7 +257,7 @@ void VMC(double *E_return, double *sigmaE_return, int Nt, int Nw, int Nb, int Nb
     }
 
     AE = SbE / NbEff;
-    sigmaE = sqrt(abs(SbE2 / NbEff - AE * AE) / (NbEff - 1.));
+    sigmaE = sqrt(fabs(SbE2 / NbEff - AE * AE) / (NbEff - 1.));
     printf(" konacni max. korak: %6.2e\n", dxyMax);
     printf(" alpha = %f, gamma = %f, s = %f\n", alpha, gamma_var, s);
     printf(" E = %8.5e +- %6.2e \n\n", AE, sigmaE);
