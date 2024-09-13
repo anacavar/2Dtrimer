@@ -98,7 +98,7 @@ void DMC(double *E_return, double *sigmaE_return, int Nt, int Nw0, int Nb, int N
   int plus_minus = 0, deltaNw, count;          // broj dodanih/oduzetih pojedinih šetača
   float remainder;                             // ostatak dijeljenja
   double fddr_value[3], fdr_value[3];          // radi logiranja vrijedosti f_dr i f_ddr
-  double max_r12 = 10000, max_angle = 3.20;      // max_angle je pi, koje su dobre vrijednosti max_r12 i max_r13?
+  double max_r12 = 100, max_angle = 3.20;      // max_angle je pi, koje su dobre vrijednosti max_r12 i max_r13?
   double r12_dist[N_r12_dist + 1], angles_dist[N_angles_dist + 1]; // distribucija duljina r12 i kuteva
   int n;                                    // indeksi za distribucije
   double angle;                                                    // kut između r12 i r13 trimera (za svakog šetača posebno)
@@ -178,8 +178,8 @@ void DMC(double *E_return, double *sigmaE_return, int Nt, int Nw0, int Nb, int N
             if (l != k) // svi osim l=k
             {
               // 4.92 VEKTOR - privremeno spremamo x i y smjer svake čestice ovog šetača u ovom koraku
-              Fqa_x[k] += -2 * f_dr(sqrt(pow((x_a[k] - x_a[l]), 2) + pow((y_a[k] - y_a[l]), 2))) * (x_a[k] - x_a[l]); 
-              Fqa_y[k] += -2 * f_dr(sqrt(pow((x_a[k] - x_a[l]), 2) + pow((y_a[k] - y_a[l]), 2))) * (y_a[k] - y_a[l]); 
+              Fqa_x[k] += -2 * f_dr(sqrt(pow((x_a[k] - x_a[l]), 2) + pow((y_a[k] - y_a[l]), 2))) * (x_a[l] - x_a[k]); 
+              Fqa_y[k] += -2 * f_dr(sqrt(pow((x_a[k] - x_a[l]), 2) + pow((y_a[k] - y_a[l]), 2))) * (y_a[l] - y_a[k]); 
             }
           }
         }
@@ -198,8 +198,8 @@ void DMC(double *E_return, double *sigmaE_return, int Nt, int Nw0, int Nb, int N
           {
             if (l != k) // svi osim l=k
             {
-              Fqb_x[k] += -2 * f_dr(sqrt(pow((x_b[k] - x_b[l]), 2) + pow((y_b[k] - y_b[l]), 2))) * (x_b[k] - x_b[l]); // u x-smjeru
-              Fqb_y[k] += -2 * f_dr(sqrt(pow((x_b[k] - x_b[l]), 2) + pow((y_b[k] - y_b[l]), 2))) * (y_b[k] - y_b[l]); // u y-smjeru
+              Fqb_x[k] += -2 * f_dr(sqrt(pow((x_b[k] - x_b[l]), 2) + pow((y_b[k] - y_b[l]), 2))) * (x_b[l] - x_b[k]); // u x-smjeru
+              Fqb_y[k] += -2 * f_dr(sqrt(pow((x_b[k] - x_b[l]), 2) + pow((y_b[k] - y_b[l]), 2))) * (y_b[l] - y_b[k]); // u y-smjeru
             }
           }
         }
@@ -221,8 +221,8 @@ void DMC(double *E_return, double *sigmaE_return, int Nt, int Nw0, int Nb, int N
           {
             if (l != k) // svi osim l=k
             {
-              Fq_x_prime[k] += -2 * f_dr(sqrt(pow((x_pw_prime[k] - x_pw_prime[l]), 2) + pow((y_pw_prime[k] - y_pw_prime[l]), 2))) * (x_pw_prime[k] - x_pw_prime[l]); // u x-smjeru
-              Fq_y_prime[k] += -2 * f_dr(sqrt(pow((x_pw_prime[k] - x_pw_prime[l]), 2) + pow((y_pw_prime[k] - y_pw_prime[l]), 2))) * (y_pw_prime[k] - y_pw_prime[l]); // u y-smjeru
+              Fq_x_prime[k] += -2 * f_dr(sqrt(pow((x_pw_prime[k] - x_pw_prime[l]), 2) + pow((y_pw_prime[k] - y_pw_prime[l]), 2))) * (x_pw_prime[l] - x_pw_prime[k]); // u x-smjeru
+              Fq_y_prime[k] += -2 * f_dr(sqrt(pow((x_pw_prime[k] - x_pw_prime[l]), 2) + pow((y_pw_prime[k] - y_pw_prime[l]), 2))) * (y_pw_prime[l] - y_pw_prime[k]); // u y-smjeru
             }
           }
         }
@@ -238,9 +238,6 @@ void DMC(double *E_return, double *sigmaE_return, int Nt, int Nw0, int Nb, int N
         r12 = sqrt(pow((x_pw_prime[2] - x_pw_prime[1]), 2) + pow((y_pw_prime[2] - y_pw_prime[1]), 2));
         r23 = sqrt(pow((x_pw_prime[3] - x_pw_prime[2]), 2) + pow((y_pw_prime[3] - y_pw_prime[2]), 2));
         r13 = sqrt(pow((x_pw_prime[3] - x_pw_prime[1]), 2) + pow((y_pw_prime[3] - y_pw_prime[1]), 2));
-        // if(it==100 && iw==50){
-        //   printf("r12=%f; r13=%f; r23=%f => fdr=%f, fddr=%f\n", r12, r13, r23, f_dr(r12), f_ddr(r12));
-        // }
         E_kin_calc = E_kin_L(r12, r13, r23, x_pw_prime[1], x_pw_prime[2], x_pw_prime[3], y_pw_prime[1], y_pw_prime[2], y_pw_prime[3]);
         E_pot_calc = E_pot_L(r12, r13, r23);
         E_L_prime = E_kin_calc + E_pot_calc;
@@ -255,17 +252,12 @@ void DMC(double *E_return, double *sigmaE_return, int Nt, int Nw0, int Nb, int N
         n_w[iw] = (int)(W_Rpw_value + rand_num); // trebalo bi uvest optimizaciju koja bi se riješila nekih od ovih šetača        
         sum_nw += n_w[iw] - 1; // suma nadodanih
 
-        // if(E_L_prime > 10){ // kaj bih još tu htjela pratit??
-        //   printf("E_L_prime = %f; E_kin=%f; E_pot=%f; w=%f, rand=%f=> n_w[%d] = %d\n", E_L_prime, E_kin_calc, E_pot_calc, W_Rpw[iw-1].value, rand_num, iw, n_w[iw]);
-        // }
-
         fdr_value[0] = f_dr(r12);
         fdr_value[1] = f_dr(r13);
         fdr_value[2] = f_dr(r23);
         fddr_value[0] = f_ddr(r12);
         fddr_value[1] = f_ddr(r13);
         fddr_value[2] = f_ddr(r23);
-
         if(ib==150 && it==500){
           fprintf(data_log, "iw:%d\tE=%f(p:%f) => w_pr=%f\tE_pot=%f\tE_kin=%f\tr12=%f(fdr=%f; fddr=%f); r13=%f(fdr=%f; fddr=%f); r23=%f(fdr=%f; fddr=%f)\n", iw, E_L_prime, E_L[iw], W_Rpw_value, E_pot_calc, E_kin_calc, r12, fdr_value[0], fddr_value[0], r13, fdr_value[1], fddr_value[1], r23, fdr_value[2], fddr_value[2]);
         }
@@ -278,7 +270,6 @@ void DMC(double *E_return, double *sigmaE_return, int Nt, int Nw0, int Nb, int N
       if (sum_nw > deltaNw) // što za sum_nw < -Nw_max ?
       {
         // VJEROJATNO TU TREBA NEKA SOFISTICIRANIJA METODA KOJA ĆE UZETI U OBZIR KOJE WALKERE TREBA PRIORITIZIRATI!!
-        // printf("it:%d >130*Nw0; trenutni Nw: %d; Nw_max=%d; za dodat: %d, deltaNw: %d\n", it, Nw, Nw_max, sum_nw, deltaNw);
         count = 0; 
         for (iw = 1; iw <= Nw; iw++) 
         { 
@@ -309,7 +300,6 @@ void DMC(double *E_return, double *sigmaE_return, int Nt, int Nw0, int Nb, int N
       nw_deficit = abs(sum_nw)-nw_max_remove; // deficit šetača do 70%*Nw0
       if (sum_nw < 0 && abs(sum_nw) > nw_max_remove)
       {
-        // printf("it:%d <70*Nw0; trenutni Nw: %d; za maknut: %d, nw_max_remove= %d-%d=%d\n", it, Nw, sum_nw, Nw, Nw_min, nw_max_remove);
         qsort(W_Rpw, Nw_max, sizeof(w_pairs), compareByValue); // sortira W_Rpw prema values, descending
         int count = 0;
         while(count<nw_deficit){
@@ -327,8 +317,6 @@ void DMC(double *E_return, double *sigmaE_return, int Nt, int Nw0, int Nb, int N
       }
 
       // korak 11. - kopiranje potomaka R'_p(w) u novi ansambl
-      // if (Nw >= (1 - percentage) * Nw0) // ako broj šetača nije pao ispod 70% početnog broja šetača
-      // { šta mi je trebao ovaj glupi uvjet????
       memcpy(x_temp, x, sizeof(x));
       memcpy(y_temp, y, sizeof(y));
       memcpy(E_L_temp, E_L, sizeof(E_L));
@@ -373,7 +361,6 @@ void DMC(double *E_return, double *sigmaE_return, int Nt, int Nw0, int Nb, int N
         // }
       }
       Nw = indeks; 
-      // }
 
       for(iw = 1; iw<=Nw; iw++){
         SwE += E_L[iw];
