@@ -150,9 +150,6 @@ void DMC(double *E_return, double *sigmaE_return, int Nt, int Nw0, int Nb, int N
   }
   E_R = SwE / Nw; // prosječna energija po šetačima = -5.271490
 
-  // printf("hello?\n");
-
-
   SbE = 0.;
   SbE2 = 0;
   for (ib = 1; ib <= Nb; ib++) // po blokovima
@@ -167,7 +164,6 @@ void DMC(double *E_return, double *sigmaE_return, int Nt, int Nw0, int Nb, int N
       oduzimanje = 0;
       for (iw = 1; iw <= Nw; iw++) // po šetačima
       {
-        // printf("ib=%d, it=%d, iw=%d\n", ib, it, iw);
         // korak 1. - gaussov pomak (Ra)
         for (k = 1; k <= 3; k++) // po česticama
         { 
@@ -283,14 +279,12 @@ void DMC(double *E_return, double *sigmaE_return, int Nt, int Nw0, int Nb, int N
       // (>130%) ako je suma dodanih šetača veća od preostalog slobodnog prostora u listi (>130%)
       if (dodavanje > deltaNw+oduzimanje) // što za sum_nw < -Nw_max ?
       {
-        // VJEROJATNO TU TREBA NEKA SOFISTICIRANIJA METODA KOJA ĆE UZETI U OBZIR KOJE WALKERE TREBA PRIORITIZIRATI!!
         count = 0; 
         for (iw = 1; iw <= Nw; iw++) 
         { 
           if(n_w[iw] == 0) // svi koji idu u nulu moraju ići u nulu
           {
             plus_minus = -1; 
-            // count += plus_minus;
           }
           if(n_w[iw] > 0){
             plus_minus = (int)((n_w[iw] - 1)*(deltaNw+oduzimanje) / dodavanje); // n_w' / slobodno = n_w / suma
@@ -309,7 +303,6 @@ void DMC(double *E_return, double *sigmaE_return, int Nt, int Nw0, int Nb, int N
           n_w[iw] = 1 + plus_minus; 
         }
         int first_iteration = 1;
-        // tbh mislim da jako rijetko ako ikad ulazi u ove petlje...
         while(count < deltaNw+oduzimanje){
           if(first_iteration == 1){
             for(iw = 1; iw <= Nw; iw++){
@@ -365,30 +358,11 @@ void DMC(double *E_return, double *sigmaE_return, int Nt, int Nw0, int Nb, int N
       memcpy(n_w_temp, n_w, sizeof(n_w));
       Nw_temp = Nw;
       Nw = 0;
-      // indeks = 1;
       indeks = 0;
-      // printf("ib=%d, it=%d, iw=%d\n", ib, it, iw); // zašto ovdje iw ostaje na minimalnoj vrijednosti????
-      // if(ib==7 && it==160){
-      //   FILE *test_data;
-      //   test_data=fopen("test_data.txt", "w");
-      //   // printf("Nw=%d\n", Nw_temp);
-      //   for (iw = 1; iw <= Nw_temp; iw++)
-      //   {
-      //     printf("%d\n", n_w[iw]);
-      //     fprintf(test_data, "%d\n", n_w[iw]);
-      //   } 
-      //   fclose(test_data);
-      // }
-
       for (iw = 1; iw <= Nw_temp; iw++)
       {
-        // if(ib==7 && it==160 ){
-        //   int a = 0;
-        // }
-        // if(ib==7) printf("ib=%d, it=%d, iw=%d\n", ib, it, iw); // zašto ovdje iw ostaje na minimalnoj vrijednosti????
         if (n_w_temp[iw] != 0) // ako je n = 0 onda taj šetač biva uništen (preskačemo ga)
         {
-          // for (int in = 0; in < n_w_temp[iw]; in++)
           for (int in = 1; in <= n_w_temp[iw]; in++)
           {
             for (k = 1; k <= 3; k++)
@@ -402,10 +376,7 @@ void DMC(double *E_return, double *sigmaE_return, int Nt, int Nw0, int Nb, int N
         }
         indeks += n_w_temp[iw]; // možda tu treba nadodat samo razliku?
       }
-      // Nw = indeks-1; 
       Nw = indeks; 
-
-      // iw = 1; indeks = 0; => iw= 5; indeks = 3; /+2 => iw = 6, indeks = 5
 
       for(iw = 1; iw<=Nw; iw++){
         SwE += E_L[iw];
