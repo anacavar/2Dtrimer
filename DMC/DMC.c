@@ -108,7 +108,7 @@ void DMC(double *E_return, double *sigmaE_return, int Nt, int Nw0, int Nb, int N
 
   char batchScript[256];
   snprintf(batchScript, sizeof(batchScript), "C:\\repos\\2Dtrimer\\DMC\\prerunVMC.bat %d %d %d %d", Nt, Nw, Nb, NbSkip);
-  system(batchScript);
+  // system(batchScript);
 
   printf("\nDMC:\n Nt=%d; Nw0=%d; Nb=%d; NbSkip=%d\n", Nt, Nw0, Nb, NbSkip);
 
@@ -150,6 +150,9 @@ void DMC(double *E_return, double *sigmaE_return, int Nt, int Nw0, int Nb, int N
   }
   E_R = SwE / Nw; // prosječna energija po šetačima = -5.271490
 
+  // printf("hello?\n");
+
+
   SbE = 0.;
   SbE2 = 0;
   for (ib = 1; ib <= Nb; ib++) // po blokovima
@@ -164,6 +167,7 @@ void DMC(double *E_return, double *sigmaE_return, int Nt, int Nw0, int Nb, int N
       oduzimanje = 0;
       for (iw = 1; iw <= Nw; iw++) // po šetačima
       {
+        // printf("ib=%d, it=%d, iw=%d\n", ib, it, iw);
         // korak 1. - gaussov pomak (Ra)
         for (k = 1; k <= 3; k++) // po česticama
         { 
@@ -286,7 +290,7 @@ void DMC(double *E_return, double *sigmaE_return, int Nt, int Nw0, int Nb, int N
           if(n_w[iw] == 0) // svi koji idu u nulu moraju ići u nulu
           {
             plus_minus = -1; 
-            count += plus_minus;
+            // count += plus_minus;
           }
           if(n_w[iw] > 0){
             plus_minus = (int)((n_w[iw] - 1)*(deltaNw+oduzimanje) / dodavanje); // n_w' / slobodno = n_w / suma
@@ -319,7 +323,7 @@ void DMC(double *E_return, double *sigmaE_return, int Nt, int Nw0, int Nb, int N
             }
             first_iteration=0;
           }
-          else if(first_iteration=0 && count<deltaNw+oduzimanje){
+          else if(first_iteration==0 && count<deltaNw+oduzimanje){
             for(iw = 1; iw <= Nw; iw++){
               if(n_w[iw]>0){
                 n_w[iw]++;
@@ -361,12 +365,31 @@ void DMC(double *E_return, double *sigmaE_return, int Nt, int Nw0, int Nb, int N
       memcpy(n_w_temp, n_w, sizeof(n_w));
       Nw_temp = Nw;
       Nw = 0;
-      indeks = 1;
+      // indeks = 1;
+      indeks = 0;
+      // printf("ib=%d, it=%d, iw=%d\n", ib, it, iw); // zašto ovdje iw ostaje na minimalnoj vrijednosti????
+      // if(ib==7 && it==160){
+      //   FILE *test_data;
+      //   test_data=fopen("test_data.txt", "w");
+      //   // printf("Nw=%d\n", Nw_temp);
+      //   for (iw = 1; iw <= Nw_temp; iw++)
+      //   {
+      //     printf("%d\n", n_w[iw]);
+      //     fprintf(test_data, "%d\n", n_w[iw]);
+      //   } 
+      //   fclose(test_data);
+      // }
+
       for (iw = 1; iw <= Nw_temp; iw++)
       {
+        // if(ib==7 && it==160 ){
+        //   int a = 0;
+        // }
+        // if(ib==7) printf("ib=%d, it=%d, iw=%d\n", ib, it, iw); // zašto ovdje iw ostaje na minimalnoj vrijednosti????
         if (n_w_temp[iw] != 0) // ako je n = 0 onda taj šetač biva uništen (preskačemo ga)
         {
-          for (int in = 0; in < n_w_temp[iw]; in++)
+          // for (int in = 0; in < n_w_temp[iw]; in++)
+          for (int in = 1; in <= n_w_temp[iw]; in++)
           {
             for (k = 1; k <= 3; k++)
             {
@@ -377,21 +400,12 @@ void DMC(double *E_return, double *sigmaE_return, int Nt, int Nw0, int Nb, int N
             n_w[indeks + in] = n_w_temp[iw];
           } 
         }
-        indeks += n_w_temp[iw];
-
-        // // ubacujemo svakog šetača u svakom koraku u distribucije ako je simulacija stabilizirana (NbSkip blokova preskočeno)
-        // if (ib > NbSkip)
-        // {
-        //   n = (int)(r12 / max_r12 * 100); // puca jer ih nema tolko unutra u polju - podijelit s nekim reasonable brojem, mislim, i ako je veće od toga valjda se sam zanemari..
-        //   if (n <= N_r12_dist)
-        //     r12_dist[n]++;          
-        //   angle = acos((r23 * r23 - r12 * r12 - r13 * r13) / (-2 * r12 * r13)); // double checkaj ovu formulu
-        //   n = (int)(angle / max_angle * 100);                                   // podijelit tipa s pi mislim
-        //   if (n <= N_angles_dist)
-        //     angles_dist[n]++;
-        // }
+        indeks += n_w_temp[iw]; // možda tu treba nadodat samo razliku?
       }
-      Nw = indeks-1; 
+      // Nw = indeks-1; 
+      Nw = indeks; 
+
+      // iw = 1; indeks = 0; => iw= 5; indeks = 3; /+2 => iw = 6, indeks = 5
 
       for(iw = 1; iw<=Nw; iw++){
         SwE += E_L[iw];

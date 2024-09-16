@@ -18,7 +18,8 @@ int main(int argc, char *argv[])
   }
   else if(argc == 1){
     printf("Started with default parameters\n");
-    int Nt = 1000, Nw = 100, Nb = 220, NbSkip = 20;
+    // int Nt = 1000, Nw = 100, Nb = 220, NbSkip = 20;
+    int Nt = 1000, Nw = 300, Nb = 300, NbSkip = 50;
     VMC(&E, &sigmaE, Nt, Nw, Nb, NbSkip);
   }
   else{

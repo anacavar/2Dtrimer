@@ -9,12 +9,12 @@ int main(int argc, char *argv[])
   double dg;
   double ds;
   double da;
-  double gamma_min = 4.68, gamma_max = 4.92;
-  double alpha_min = 4.45, alpha_max = 4.65;
+  double gamma_min = 4.65, gamma_max = 5.00;
+  double alpha_min = 4.46, alpha_max = 4.63;
   double s_min = 0.2, s_max = 0.4;
   double E, sigmaE;
-  int N_gamma = 5;
-  int N_alpha = 10;
+  int N_gamma = 6;
+  int N_alpha = 20;
   int N_s = 5;
   int count;
   dg = (gamma_max - gamma_min) / N_gamma;
