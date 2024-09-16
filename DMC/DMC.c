@@ -84,6 +84,7 @@ void DMC(double *E_return, double *sigmaE_return, int Nt, int Nw0, int Nb, int N
   double W_Rpw_value;                          // statistička težina
   int n_w[Nw_max+1];                           // broj potomaka
   int sum_nw;                                  // suma potomaka nastalih tijekom jednog koraka
+  int dodavanje, oduzimanje;                                  // suma potomaka nastalih tijekom jednog koraka
   int nw_max_remove;                           // broj šetača koje smijemo maknuti prije nego broj padne ispod (1-percentage)*Nw0
   int nw_deficit;                              // koliko šetača se treba nadodati u slučaju da je broj pao ispod (1-percentage)*Nw0
   int n_w_temp[Nw_max+1];                      // temporary lista broja potomaka
@@ -158,7 +159,9 @@ void DMC(double *E_return, double *sigmaE_return, int Nt, int Nw0, int Nb, int N
     for (it = 1; it <= Nt; it++) // po koracima
     {
       SwE = 0;
-      sum_nw = 0;
+      dodavanje = 0;
+      deltaNw = Nw_max - Nw;
+      oduzimanje = 0;
       for (iw = 1; iw <= Nw; iw++) // po šetačima
       {
         // korak 1. - gaussov pomak (Ra)
@@ -251,7 +254,13 @@ void DMC(double *E_return, double *sigmaE_return, int Nt, int Nw0, int Nb, int N
         // korak 9. - stohastička procjena broja potomaka
         rand_num = ran1(&idum);
         n_w[iw] = (int)(W_Rpw_value + rand_num); // trebalo bi uvest optimizaciju koja bi se riješila nekih od ovih šetača        
-        sum_nw += n_w[iw] - 1; // suma nadodanih
+
+        if(n_w[iw]==0){
+          oduzimanje++;
+        }
+        else{
+          dodavanje += n_w[iw] - 1;
+        }
 
         fdr_value[0] = f_dr(r12);
         fdr_value[1] = f_dr(r13);
@@ -265,10 +274,10 @@ void DMC(double *E_return, double *sigmaE_return, int Nt, int Nw0, int Nb, int N
 
         E_L[iw] = E_L_prime;
       } // kraj petlje šetača
+      sum_nw = dodavanje - oduzimanje;
       
       // (>130%) ako je suma dodanih šetača veća od preostalog slobodnog prostora u listi (>130%)
-      deltaNw = Nw_max - Nw;
-      if (sum_nw > deltaNw) // što za sum_nw < -Nw_max ?
+      if (dodavanje > deltaNw+oduzimanje) // što za sum_nw < -Nw_max ?
       {
         // VJEROJATNO TU TREBA NEKA SOFISTICIRANIJA METODA KOJA ĆE UZETI U OBZIR KOJE WALKERE TREBA PRIORITIZIRATI!!
         count = 0; 
@@ -280,19 +289,47 @@ void DMC(double *E_return, double *sigmaE_return, int Nt, int Nw0, int Nb, int N
             count += plus_minus;
           }
           if(n_w[iw] > 0){
-            plus_minus = (int)((n_w[iw] - 1)*deltaNw / sum_nw); // n_w' / slobodno = n_w / suma
-            remainder = (float)(((n_w[iw] - 1)*deltaNw) % sum_nw )/(float)sum_nw;
+            plus_minus = (int)((n_w[iw] - 1)*(deltaNw+oduzimanje) / dodavanje); // n_w' / slobodno = n_w / suma
+            remainder = (float)(((n_w[iw] - 1)*(deltaNw+oduzimanje)) % dodavanje )/(float)dodavanje;
             if (remainder >= 0.5){
               plus_minus += 1; // round up
             }
-              count += plus_minus;
-            if (count > deltaNw) 
+            count += plus_minus; // jer ovo može bit negativno ako je previše nula a svi ovi ostali se vrate u 1
+            if (count > deltaNw+oduzimanje) 
             {
-              plus_minus -= count - deltaNw; // oduzmemo razliku
-              count = deltaNw; // spustimo na maskimalnu dozvoljenu popunjenost
+              plus_minus -= count - (deltaNw+oduzimanje); // oduzmemo razliku
+              count = deltaNw+oduzimanje; // spustimo na maskimalnu dozvoljenu popunjenost
             }
           }
+          //dodat još jednu iteraciju dok se count sigurno ne popuni...
           n_w[iw] = 1 + plus_minus; 
+        }
+        int first_iteration = 1;
+        // tbh mislim da jako rijetko ako ikad ulazi u ove petlje...
+        while(count < deltaNw+oduzimanje){
+          if(first_iteration == 1){
+            for(iw = 1; iw <= Nw; iw++){
+              if(n_w[iw]>1){
+                n_w[iw]++;
+                count++;
+              }
+              if (count>=deltaNw+oduzimanje){
+                break;
+              }
+            }
+            first_iteration=0;
+          }
+          else if(first_iteration=0 && count<deltaNw+oduzimanje){
+            for(iw = 1; iw <= Nw; iw++){
+              if(n_w[iw]>0){
+                n_w[iw]++;
+                count++;
+              }
+              if (count>=deltaNw+oduzimanje){
+                break;
+              }
+            }
+          }
         }
       }
 
@@ -340,14 +377,7 @@ void DMC(double *E_return, double *sigmaE_return, int Nt, int Nw0, int Nb, int N
             n_w[indeks + in] = n_w_temp[iw];
           } 
         }
-        if (iw != Nw_temp) // ako nije zadnji korak
-        {
-          indeks += n_w_temp[iw];
-        }
-        else if (iw == Nw_temp && n_w_temp[iw] == 0)
-        {
-          indeks = indeks - 1; // brijem ide -1 jer kao ne trebam se dalje pomaknut od zadnjeg indeksa
-        }
+        indeks += n_w_temp[iw];
 
         // // ubacujemo svakog šetača u svakom koraku u distribucije ako je simulacija stabilizirana (NbSkip blokova preskočeno)
         // if (ib > NbSkip)
@@ -361,7 +391,7 @@ void DMC(double *E_return, double *sigmaE_return, int Nt, int Nw0, int Nb, int N
         //     angles_dist[n]++;
         // }
       }
-      Nw = indeks; 
+      Nw = indeks-1; 
 
       for(iw = 1; iw<=Nw; iw++){
         SwE += E_L[iw];
@@ -393,7 +423,6 @@ void DMC(double *E_return, double *sigmaE_return, int Nt, int Nw0, int Nb, int N
     n = (int)(r12 / max_r12 * 100); // puca jer ih nema tolko unutra u polju - podijelit s nekim reasonable brojem, mislim, i ako je veće od toga valjda se sam zanemari..
     if (n <= N_r12_dist)
       r12_dist[n]++;          
-
     x_acos = (r23 * r23 - r12 * r12 - r13 * r13) / (-2 * r12 * r13);
     if(x_acos > 1) x_acos = 1;
     if(x_acos < -1) x_acos = -1;

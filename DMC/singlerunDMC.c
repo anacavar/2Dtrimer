@@ -19,6 +19,7 @@ int main(int argc, char *argv[])
     printf("Started with default parameters:\n");
     // int Nt = 1000, Nw = 100, Nb = 220, NbSkip = 20;
     int Nt = 1000, Nw = 100, Nb = 300, NbSkip = 0;
+    // int Nt = 1000, Nw = 300, Nb = 300, NbSkip = 50;
     printf("%d %d %d %d\n", Nt, Nw, Nb, NbSkip);
     DMC(&E, &sigmaE, Nt, Nw, Nb, NbSkip);
   }
