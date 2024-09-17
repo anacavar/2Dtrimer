@@ -6,22 +6,22 @@ double alpha, gamma_var, s;
 
 int main(int argc, char *argv[])
 {
-  double dg;
   // double da;
+  double dg;
   double ds;
-  double gamma_min = 4.68, gamma_max = 4.92;
   // double alpha_min = 4.40, alpha_max = 4.70;
-  double s_min = 0.2, s_max = 0.4;
+  double gamma_min = 4.68, gamma_max = 4.95;
+  double s_min = 0.24, s_max = 0.42;
   double E, sigmaE;
+  // int N_alpha = 5;
   int N_gamma = 5;
-  int N_alpha = 5;
-  int N_s = 5;
+  int N_s = 10;
   int count;
   dg = (gamma_max - gamma_min) / N_gamma;
   // da = (alpha_max - alpha_min) / N_alpha;
   ds = (s_max - s_min) / N_s;
   FILE *dataEs, *parameters_log;
-  dataEs = fopen("dataEs.txt", "w");
+  dataEs = fopen("dataEa.txt", "w");
   parameters_log = fopen("parameters_log.txt", "w");
 
   if(argc == 5){

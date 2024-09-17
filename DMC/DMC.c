@@ -101,8 +101,8 @@ void DMC(double *E_return, double *sigmaE_return, int Nt, int Nw0, int Nb, int N
   double fddr_value[3], fdr_value[3];          // radi logiranja vrijedosti f_dr i f_ddr
   double max_r12 = 100, max_angle = 3.20;      // max_angle je pi, koje su dobre vrijednosti max_r12 i max_r13?
   double r12_dist[N_r12_dist + 1], angles_dist[N_angles_dist + 1]; // distribucija duljina r12 i kuteva
-  int n;                                    // indeksi za distribucije
-  double angle;                                                    // kut između r12 i r13 trimera (za svakog šetača posebno)
+  int n;                                       // indeksi za distribucije
+  double angle;                                // kut između r12 i r13 trimera (za svakog šetača posebno)
   double x_acos;
 #pragma endregion
 

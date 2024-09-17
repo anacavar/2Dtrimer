@@ -84,9 +84,9 @@ void VMC(double *E_return, double *sigmaE_return, int Nt, int Nw, int Nb, int Nb
 
     FILE *data, *data_angles, *data_r12, *data_r12_r13, *data_coordinates, *data_log;
     data = fopen("data.txt", "w");
-    data_angles = fopen("data_angles.txt", "w");
-    data_r12 = fopen("data_r12.txt", "w");
-    data_r12_r13 = fopen("data_r12_r13.txt", "w");
+    data_angles = fopen("distribucije/data_angles.txt", "w");
+    data_r12 = fopen("distribucije/data_r12.txt", "w");
+    data_r12_r13 = fopen("distribucije/data_r12_r13.txt", "w");
     data_coordinates = fopen("data_coordinates.txt", "w");
     data_log = fopen("data_log_VMC.txt", "w");
 

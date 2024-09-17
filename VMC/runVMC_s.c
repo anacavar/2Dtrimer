@@ -9,11 +9,11 @@ int main(int argc, char *argv[])
   double dg;
   double da;
   // double ds;
-  double gamma_min = 4.65, gamma_max = 5.00;
-  double alpha_min = 4.46, alpha_max = 4.63;
+  double gamma_min = 4.67, gamma_max = 5.00;
+  double alpha_min = 4.48, alpha_max = 4.63;
   // double s_min = 0.2, s_max = 0.4;
   double E, sigmaE;
-  int N_gamma = 10;
+  int N_gamma = 7;
   int N_alpha = 20;
   // int N_s = 5;
   int count;
@@ -21,7 +21,7 @@ int main(int argc, char *argv[])
   da = (alpha_max - alpha_min) / N_alpha;
   // ds = (s_max - s_min) / N_s;
   FILE *dataEs, *parameters_log;
-  dataEs = fopen("dataEs.txt", "w");
+  dataEs = fopen("dataEs_s.txt", "w");
   parameters_log = fopen("parameters_log.txt", "w");
 
   if(argc == 5){
