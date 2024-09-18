@@ -8,12 +8,12 @@ double alpha, gamma_var, s;
 int main(int argc, char *argv[])
 {
   double E, sigmaE;
-  // gamma_var = gamma_initial;
-  // alpha = alpha_initial;
-  // s = s_initial;
-  gamma_var = 4.8;
-  alpha = 4.50;
-  s = 0.28;
+  gamma_var = gamma_initial;
+  alpha = alpha_initial;
+  s = s_initial;
+  // gamma_var = 4.8;
+  // alpha = 4.50;
+  // s = 0.28;
 
   if(argc == 5){
     int Nt = atoi(argv[1]), Nw = atoi(argv[2]), Nb = atoi(argv[3]), NbSkip = atoi(argv[4]);

@@ -1,0 +1,1 @@
+plot 'data.txt' u 1:2 w l title 'prosjek po bloku', 'data.txt' u 1:3 w l title 'prosjek od pocetka simulacije'

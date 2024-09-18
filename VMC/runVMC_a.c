@@ -11,10 +11,10 @@ int main(int argc, char *argv[])
   double ds;
   // double alpha_min = 4.40, alpha_max = 4.70;
   double gamma_min = 4.68, gamma_max = 4.95;
-  double s_min = 0.24, s_max = 0.42;
+  double s_min = 0.26, s_max = 0.38;
   double E, sigmaE;
   // int N_alpha = 5;
-  int N_gamma = 5;
+  int N_gamma = 7;
   int N_s = 10;
   int count;
   dg = (gamma_max - gamma_min) / N_gamma;
