@@ -4,6 +4,7 @@
 #include "global_vars.h"
 
 double alpha, gamma_var, s;
+double dtau;
 
 int main(int argc, char *argv[])
 {
@@ -11,9 +12,13 @@ int main(int argc, char *argv[])
   // gamma_var = gamma_initial;
   // alpha = alpha_initial;
   // s = s_initial;
-  gamma_var = 4.8;
-  alpha = 4.50;
-  s = 0.28;
+  // double gamma_var = 4.8;
+  // double alpha = 4.50;
+  // double s = 0.28;
+  gamma_var = 4.77;
+  alpha = 4.55;
+  s = 0.3;
+  dtau = 1.0 * pow(10, -3);
   if(argc == 5){
     int Nt = atoi(argv[1]), Nw = atoi(argv[2]), Nb = atoi(argv[3]), NbSkip = atoi(argv[4]);
     DMC(&E, &sigmaE, Nt, Nw, Nb, NbSkip);

@@ -1,0 +1,1 @@
+plot 'dataE_dtau.txt' u 3:1 w l

@@ -32,9 +32,9 @@
 #define gamma_initial 4.77                               // eksponent u probnoj valnoj funkciji
 #define s_initial 0.3 / A                                // eksponent u probnoj valnoj funkciji A^-1
 #define mass 4. * u                                      // u
-#define dtau 1.0 * pow(10, -3) / K                       // korak vremena ∆τ (10^(-6) 1/mK)
 #define N_r12_dist 100         // broj binova za distribuciju r12
 #define N_angles_dist 100      // broj binova za distribuciju kuteva
+// #define dtau 1.0 * pow(10, -3) / K                       // korak vremena ∆τ (10^(-6) 1/mK)
 
 // deklaracija funkcija
 double U_LJ(double);                                                                    // Lennard-Jonesov potencijal
@@ -57,6 +57,7 @@ int compareByValue(const void *a, const void *b)
 
 void DMC(double *E_return, double *sigmaE_return, int Nt, int Nw0, int Nb, int NbSkip)
 {
+  printf("primljeni dtau: %f\n", dtau);
 #pragma region // VARIJABLE
   long idum = -1234;
   int ib, it, iw, i, j, k, l, indeks;          // indeks bloka, indeks koraka, indeks šetača, indeks čestice
@@ -108,7 +109,7 @@ void DMC(double *E_return, double *sigmaE_return, int Nt, int Nw0, int Nb, int N
 
   char batchScript[256];
   snprintf(batchScript, sizeof(batchScript), "C:\\repos\\2Dtrimer\\DMC\\prerunVMC.bat %d %d %d %d", Nt, Nw, Nb, NbSkip);
-  system(batchScript);
+  // system(batchScript);
 
   printf("\nDMC:\n Nt=%d; Nw0=%d; Nb=%d; NbSkip=%d\n", Nt, Nw0, Nb, NbSkip);
 

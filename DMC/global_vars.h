@@ -1,1 +1,2 @@
-extern double alpha, gamma_var, s;
+extern double gamma_var, alpha, s;
+extern double dtau;

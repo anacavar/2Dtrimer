@@ -2,37 +2,33 @@
 #include "DMC.c"
 #include "global_vars.h"
 
-double alpha, gamma_var, s;
+// double alpha, gamma_var, s;
+// #define dtau 1.0 * pow(10, -3) / K                       // korak vremena ∆τ (10^(-6) 1/mK)
+
+double gamma_var, alpha, s, dtau;
 
 int main()
 {
-  double dg;
-  double ds;
-  double da;
-  double gamma_min = 4.5, gamma_max = 4.6;
-  double alpha_min = 4.54, alpha_max = 4.75;
-  double s_min = 0.2, s_max = 0.4;
+  double d_dtau;
+  double dtau_min = 0.1 * pow(10, -3), dtau_max = 1.0 * pow(10, -3); // su kolki??
   double E, sigmaE;
-  int N = 5;
-  dg = (gamma_max - gamma_min) / N;
-  ds = (s_max - s_min) / N;
-  da = (alpha_max - alpha_min) / N;
 
-  // ako variramo uz konstantni s
-  FILE *dataEs;
-  dataEs = fopen("dataEs.txt", "w");
-  s = s_initial;
-  for (int ig = 0; ig < N; ig++)
+  gamma_var = 4.77;
+  alpha = 4.55;
+  s = 0.3;
+  // int N = 10;
+  int N = 5;
+  d_dtau = (dtau_max - dtau_min) / N;
+
+  FILE *dataE_dtau;
+  dataE_dtau = fopen("dataE_dtau.txt", "w");
+  for (int idt = 0; idt < N; idt++)
   {
-    // za zadani s, za svaki gamma, ili gamma? variraš alpha...
-    gamma_var = gamma_min + ig * dg;
-    for (int ia = 0; ia < N; ia++)
-    {
-      alpha = alpha_min + ia * da;
-      // izvrti program..
-      DMC(&E, &sigmaE, 1000, 100, 220, 20);
-      fprintf(dataEs, "%f\t%f\t%f\t%f\n", E, sigmaE, alpha, gamma_var);
-    }
+    dtau = dtau_min + idt * d_dtau;
+    printf("dtau=%f\n", dtau);
+    // DMC(&E, &sigmaE, 1000, 100, 220, 20);
+    DMC(&E, &sigmaE, 1000, 300, 350, 50);
+    fprintf(dataE_dtau, "%f\t%f\t%f\t%f\n", E, sigmaE, dtau);
   }
-  fclose(dataEs);
+  fclose(dataE_dtau);
 }
