@@ -1,1 +1,0 @@
-plot 'data.txt' u 1:4 w l title 'prosjek po bloku', 'data.txt' u 1:5 w l title 'prosjek od pocetka simulacije'

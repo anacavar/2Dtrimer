@@ -84,7 +84,6 @@ void VMC(double *E_return, double *sigmaE_return, int Nt, int Nw, int Nb, int Nb
     data_coordinates = fopen("VMC_data_coordinates.txt", "w");
     data_log = fopen("VMC_data_log_VMC.txt", "w");
 
-
     // Initialize 1D arrays
     for (int i = 0; i < N_r12_dist; i++) {
         r12_dist[i] = 0.0;
