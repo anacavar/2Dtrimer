@@ -42,17 +42,16 @@ double U_LJ(double r) // lennard-jones potencijal
 }
 
 int main(){
+  FILE *output_file;
+  output_file = fopen("output.txt", "w"); 
 
-    FILE *output_file;
-    output_file = fopen("output.txt", "w"); 
+  double step = (X_MAX - X_MIN) / (double)(N_POINTS - 1);  // Izračunaj korak između točaka
 
-    double step = (X_MAX - X_MIN) / (double)(N_POINTS - 1);  // Izračunaj korak između točaka
+  for (int i = 0; i < N_POINTS; i++) {
+    double x = X_MIN + i * step;    // Izračunaj trenutnu vrijednost x
+    fprintf(output_file, "%lf\t%lf\t%lf\t%lf\t%lf\n", x, U_LJ(x), 1200*Psi(x)*Psi(x), f_dr(x), f_ddr(x));  // Zapiši x i y u datoteku
+  }
 
-    for (int i = 0; i < N_POINTS; i++) {
-        double x = X_MIN + i * step;    // Izračunaj trenutnu vrijednost x
-        fprintf(output_file, "%lf\t%lf\t%lf\t%lf\t%lf\n", x, U_LJ(x), Psi(x), f_dr(x), f_ddr(x));  // Zapiši x i y u datoteku
-    }
-  
-    fclose(output_file);
-    return 0;  
+  fclose(output_file);
+  return 0;  
 }

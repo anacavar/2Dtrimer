@@ -77,12 +77,12 @@ void VMC(double *E_return, double *sigmaE_return, int Nt, int Nw, int Nb, int Nb
 #pragma endregion
 
     FILE *data, *data_angles, *data_r12, *data_r12_r13, *data_coordinates, *data_log;
-    data = fopen("data.txt", "w");
-    data_angles = fopen("data_angles.txt", "w");
-    data_r12 = fopen("data_r12.txt", "w");
-    data_r12_r13 = fopen("data_r12_r13.txt", "w");
-    data_coordinates = fopen("data_coordinates.txt", "w");
-    data_log = fopen("data_log_VMC.txt", "w");
+    data = fopen("VMC_data.txt", "w");
+    data_angles = fopen("VMC_data_angles.txt", "w");
+    data_r12 = fopen("VMC_data_r12.txt", "w");
+    data_r12_r13 = fopen("VMC_data_r12_r13.txt", "w");
+    data_coordinates = fopen("VMC_data_coordinates.txt", "w");
+    data_log = fopen("VMC_data_log_VMC.txt", "w");
 
 
     // Initialize 1D arrays
@@ -278,10 +278,8 @@ void VMC(double *E_return, double *sigmaE_return, int Nt, int Nw, int Nb, int Nb
         fprintf(data_r12, "%f\t%f\t\n", (double)(i+0.5) * max_r12 / N_r12_dist, r12_dist[i]/ukupni_br);
     }
 
-    // for (i = 1; i <= N_angles_dist; i++) // po binovima raspodjele kutova
     for (i = 0; i < N_angles_dist; i++) // po binovima raspodjele kutova
     {
-        printf("%f\t%f\t%f\t%f\n", (double)(i+0.5) * max_angle / N_angles_dist, angles_gamma_dist[i]/ukupni_br, angles_beta_dist[i]/ukupni_br, angles_alpha_dist[i]/ukupni_br);
         fprintf(data_angles, "%f\t%f\t%f\t%f\n", (double)(i+0.5) * max_angle / N_angles_dist, angles_gamma_dist[i]/ukupni_br, angles_beta_dist[i]/ukupni_br, angles_alpha_dist[i]/ukupni_br);
     }
 
