@@ -115,7 +115,7 @@ void DMC(double *E_return, double *sigmaE_return, int Nt, int Nw0, int Nb, int N
 
   FILE *data, *VMC_coordinates, *data_log, *data_r12, *data_angles, *data_coordinates;
   data = fopen("data.txt", "w");
-  VMC_coordinates = fopen("../VMC/data_coordinates.txt", "r");  
+  VMC_coordinates = fopen("../VMC/VMC_data_coordinates.txt", "r");  
   if (VMC_coordinates == NULL) {
     printf("Error opening VMC_coordinates file.\n");
     exit(1);
@@ -477,4 +477,3 @@ double E_kin_L(double r12, double r13, double r23, double x1, double x2, double 
   double dio3 = f_ddr(r13) + f_ddr(r23) + pow(f_dr(r13) * (x1 - x3) + f_dr(r23) * (x2 - x3), 2) + pow(f_dr(r13) * (y1 - y3) + f_dr(r23) * (y2 - y3), 2);
   return -D * (dio1 + dio2 + dio3);
 }
-
