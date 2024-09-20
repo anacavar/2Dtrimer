@@ -17,13 +17,9 @@
 #define hbar2 4.851159708 * 10 * k_B *K *pow(A, 2) * u // (reducirana planckova konstanta)^2
 #define hbar2_si 1.112121717 * pow(10, -68)            // (Js)^2 = (m2kg/s)^2
 // početne vrijednosti
-// #define Nw_initial 100                 // broj šetača
-// #define Nt_initial 1000                // broj koraka
-// #define Nb_initial 220                 // broj blokova
-// #define NbSkip_initial 20              // broj prvih blokova koje preskačemo
-#define N_r12_dist 100         // broj binova za distribuciju r12
-#define N_r12_r13_dist 100     // broj binova za distribuciju r12 i r13
-#define N_angles_dist 100      // broj binova za distribuciju kuteva
+#define N_r12_dist 1000         // broj binova za distribuciju r12
+#define N_r12_r13_dist 100     // broj binova za distribuciju r12 i r13 - pazi, 1000 mu bude previše
+#define N_angles_dist 1000      // broj binova za distribuciju kuteva
 #define sigma 4 * A            // angstrema
 #define epsilon 12 * k_B *K    // dubina jame, u kelvinima preko boltzmannove konstante
 #define L0 30. * A             // angstrema
@@ -31,11 +27,6 @@
 #define gamma_initial 4.77     // eksponent u probnoj valnoj funkciji
 #define s_initial 0.3 / A      // eksponent u probnoj valnoj funkciji A^-1
 #define mass 4. * u            // u
-
-// OVU MASU BI TREBALO preračunat tako da konstanta h^2/2m ispadne u miliKelvinima
-// konstanta Ck1/2/3 mora ispast milikelvin * angstrem kvadrat
-// mi sa slike je reducirana masa
-// double check sve to, zaš imam onu boltzmannovu konstantu k_B u hbar2?
 
 // deklaracija funkcija
 double Psi(double);                                                                     // probna valna funkcija (korelacijska funkcija)
@@ -51,32 +42,35 @@ void VMC(double *E_return, double *sigmaE_return, int Nt, int Nw, int Nb, int Nb
 #pragma region // VARIJABLE
     long idum = -1234;
     int i, ib, it, iw, k;
-    double x[4][Nw + 1], y[4][Nw + 1]; // indeks čestice, indeks šetača
+    double x[4][Nw + 1], y[4][Nw + 1];                               // indeks čestice, indeks šetača
     double x_old[4], y_old[4];
-    double dx, dy;            // promjene koordinata čestica
-    double dxyMax = L0 / 100; // maksimalne promjene x,y,z koordinata
+    double dx, dy;                                                   // promjene koordinata čestica
+    double dxyMax = L0 / 100;                                        // maksimalne promjene x,y,z koordinata
     double random_number;
-    double psi_initial, psi_final; // ukupna inicijalna i finalna probna valna funkcija
-    double P[Nw + 1];              // vjerojatnost prijelaza Ri -> Rf za svakog šetača posebno
-    double E_L[Nw + 1];            // lokalna energija zadnjeg koraka svakog od šetača
-    double r12, r23, r13;          // udaljenosti između čestica
-    double x1, x2, x3, y1, y2, y3; // trenutne koordinate svih čestica
-    double T;                      // vjerojatnost prijelaza Ri -> Rf
+    double psi_initial, psi_final;                                   // ukupna inicijalna i finalna probna valna funkcija
+    double P[Nw + 1];                                                // vjerojatnost prijelaza Ri -> Rf za svakog šetača posebno
+    double E_L[Nw + 1];                                              // lokalna energija zadnjeg koraka svakog od šetača
+    double r12, r23, r13;                                            // udaljenosti između čestica
+    double x1, x2, x3, y1, y2, y3;                                   // trenutne koordinate svih čestica
+    double T;                                                        // vjerojatnost prijelaza Ri -> Rf
     int accepted = 0, rejected = 0;
     double ratio;
     double SwE;                                                      // = suma(srednjih E) po setacima
     double StE;                                                      // = suma (srednjih E) po koracima
     double SbE;                                                      // = suma (srednjih E) po blokovima
     double SbE2;                                                     // = suma (srednjih E^2) po blokovima
+    double Swr, Str, Sbr, Sbr2;                             // za srednju kvadratnu vrijednost r
     double AE, sigmaE;                                               // srednja vrijednost i standardna devijacija
+    double Ar, sigmar;                                           // srednja vrijednost i standardna devijacija
     int NbEff;                                                       // efektivni indeks bloka
     int itmp;                                                        // postotak prihvaćanja
-    double angle;                                                    // kut između r12 i r13 trimera (za svakog šetača posebno)
-    double r12_dist[N_r12_dist + 1], angles_dist[N_angles_dist + 1]; // distribucija duljina r12 i kuteva
-    double r12_r13_dist[N_r12_r13_dist + 1][N_r12_r13_dist + 1];     // distribucija duljina r12 i r13
-    double max_r12 = 100, max_r13 = 100, max_angle = 3.20;           // max_angle je pi, koje su dobre vrijednosti max_r12 i max_r13?
-    // što ako stavim veći max_angle, recimo 2pi?
-    int n, m; // indeksi za distribucije
+    double angle_alpha, angle_beta, angle_gamma;                                                    // kut između r12 i r13 trimera (za svakog šetača posebno)
+    // double r12_dist[N_r12_dist + 1], angles_gamma_dist[N_angles_dist + 1], angles_beta_dist[N_angles_dist + 1], angles_alpha_dist[N_angles_dist + 1]; // distribucija duljina r12 i kuteva
+    // double r12_r13_dist[N_r12_r13_dist + 1][N_r12_r13_dist + 1];     // distribucija duljina r12 i r13
+    double r12_dist[N_r12_dist], angles_gamma_dist[N_angles_dist], angles_beta_dist[N_angles_dist], angles_alpha_dist[N_angles_dist]; // distribucija duljina r12 i kuteva
+    double r12_r13_dist[N_r12_r13_dist][N_r12_r13_dist];     // distribucija duljina r12 i r13
+    double max_r12 = 20, max_r13 = 20, max_angle = 180;             // max_angle je pi, koje su dobre vrijednosti max_r12 i max_r13?
+    int n, m;                                                        // indeksi za distribucije
     double E_kin_calc, E_pot_calc;
     double fdr_value[3], fddr_value[3];
     double x_acos;
@@ -84,14 +78,30 @@ void VMC(double *E_return, double *sigmaE_return, int Nt, int Nw, int Nb, int Nb
 
     FILE *data, *data_angles, *data_r12, *data_r12_r13, *data_coordinates, *data_log;
     data = fopen("data.txt", "w");
-    // data_angles = fopen("distribucije/data_angles.txt", "w");
-    // data_r12 = fopen("distribucije/data_r12.txt", "w");
-    // data_r12_r13 = fopen("distribucije/data_r12_r13.txt", "w");
     data_angles = fopen("data_angles.txt", "w");
     data_r12 = fopen("data_r12.txt", "w");
     data_r12_r13 = fopen("data_r12_r13.txt", "w");
     data_coordinates = fopen("data_coordinates.txt", "w");
     data_log = fopen("data_log_VMC.txt", "w");
+
+
+    // Initialize 1D arrays
+    for (int i = 0; i < N_r12_dist; i++) {
+        r12_dist[i] = 0.0;
+    }
+
+    for (int i = 0; i < N_angles_dist; i++) {
+        angles_alpha_dist[i] = 0.0;
+        angles_beta_dist[i] = 0.0;
+        angles_gamma_dist[i] = 0.0;
+    }
+
+    // Initialize 2D array
+    for (int i = 0; i < N_r12_r13_dist; i++) {
+        for (int j = 1; j <= N_r12_r13_dist; j++) {
+            r12_r13_dist[i][j] = 0.0;
+        }
+    }
 
     // inicijalizacija koordinata čestica gdje je gustoća Psi*Psi znacajna
     for (iw = 1; iw <= Nw; iw++) // po šetačima
@@ -107,16 +117,20 @@ void VMC(double *E_return, double *sigmaE_return, int Nt, int Nw, int Nb, int Nb
         P[iw] = Psi(r12) * Psi(r23) * Psi(r13);
     }
 
+    Sbr = 0.;
+    Sbr2 = 0.;
     SbE = 0.;
     SbE2 = 0;
     for (ib = 1; ib <= Nb; ib++) // po blokovima
     {
+        Str = 0;
         StE = 0;
         NbEff = ib - NbSkip;
         accepted = 0;
         rejected = 0;
         for (it = 1; it <= Nt; it++) // po koracima
         {
+            Swr = 0;
             SwE = 0;
             for (iw = 1; iw <= Nw; iw++) // po šetačima
             {
@@ -175,6 +189,7 @@ void VMC(double *E_return, double *sigmaE_return, int Nt, int Nw, int Nb, int Nb
                 E_pot_calc = E_pot_L(r12, r13, r23);
                 E_L[iw] = E_kin_calc + E_pot_calc; // kinetički dio + potencijalni dio
                 SwE = SwE + E_L[iw];
+                Swr = Swr + r12;
 
                 fdr_value[0] = f_dr(r12); 
                 fdr_value[1] = f_dr(r13); 
@@ -191,30 +206,49 @@ void VMC(double *E_return, double *sigmaE_return, int Nt, int Nw, int Nb, int Nb
                 // ubacujemo svakog šetača u svakom koraku u distribucije ako je simulacija stabilizirana (NbSkip blokova preskočeno)
                 if (ib > NbSkip)
                 {
-                    n = (int)(r12 / max_r12 * 100); 
+                    n = (int)(r12 / max_r12 * N_r12_dist); 
+                    // printf("nti_coord = %f < r12=%f < n+1ti_coord = %f\n", n*max_r12/N_r12_dist, r12, (n+1)*max_r12/N_r12_dist);
                     if (n <= N_r12_dist)
                         r12_dist[n]++;
-                    m = (int)(r13 / max_r13 * 100);
+
+                    n = (int)(r12 / max_r12 * N_r12_r13_dist); 
+                    m = (int)(r13 / max_r13 * N_r12_r13_dist);
                     if (n <= N_r12_r13_dist && m <= N_r12_r13_dist)
                         r12_r13_dist[n][m]++;
 
+                    // kut gamma je kut između vektora r12 i r13
                     x_acos = (r23 * r23 - r12 * r12 - r13 * r13) / (-2 * r12 * r13);
                     if(x_acos > 1) x_acos = 1;
                     if(x_acos < -1) x_acos = -1;
-
-                    angle = acos(x_acos); 
-                    n = (int)(angle / max_angle * 100);  // podijelit tipa s pi mislim
-
+                    angle_gamma = acos(x_acos); 
+                    n = (int)(angle_gamma / 3.14 * N_angles_dist);  
                     if (n <= N_angles_dist) 
-                        angles_dist[n]++;
+                        angles_gamma_dist[n]++;
+
+                    // kut alpha je kut između vektora r13 i r23
+                    x_acos = (r12 * r12 - r23 * r23 - r13 * r13) / (-2 * r23 * r13);
+                    if(x_acos > 1) x_acos = 1;
+                    if(x_acos < -1) x_acos = -1;
+                    angle_alpha = acos(x_acos); 
+                    n = (int)(angle_alpha / 3.14 * N_angles_dist);  
+                    if (n <= N_angles_dist) 
+                        angles_alpha_dist[n]++;
+
+                    // kut beta je kut između vektora r12 i r23
+                    x_acos = (r13 * r13 - r12 * r12 - r23 * r23) / (-2 * r12 * r23);
+                    if(x_acos > 1) x_acos = 1;
+                    if(x_acos < -1) x_acos = -1;
+                    angle_beta = acos(x_acos); 
+                    n = (int)(angle_beta / 3.14 * N_angles_dist);  
+                    if (n <= N_angles_dist) 
+                        angles_beta_dist[n]++;                    
                 }
-                // -179.7935306576651
-                // -179.7935306576649
             } // kraj petlje šetača
             // akumulacija podataka nakon stabilizacije
             if (ib > NbSkip)
             {
                 StE += SwE / Nw;
+                Str += Swr / Nw;
             }
         } // kraj petlje koraka
         // nakon svakog bloka podeđavamo maksimalnu duljinu koraka kako bi prihvaćanje bilo oko 50%
@@ -228,28 +262,34 @@ void VMC(double *E_return, double *sigmaE_return, int Nt, int Nw, int Nb, int Nb
         if (ib > NbSkip)
         {
             SbE += StE / Nt;
+            Sbr += Str / Nt;
             SbE2 += StE*StE / (Nt*Nt);
-            fprintf(data, "%d\t%f\t%f\n", NbEff, StE / Nt, SbE / NbEff); // indeks bloka, srednji E po koracima (po jednom bloku), Srednji E po blokovima (od početka simulacije)
+            Sbr2 += Str*Str / (Nt*Nt);
+            fprintf(data, "%d\t%f\t%f\t%f\t%f\n", NbEff, StE / Nt, SbE / NbEff, Str / Nt, Sbr / NbEff); // indeks bloka, srednji E po koracima (po jednom bloku), Srednji E po blokovima (od početka simulacije), srednja kvadratna vrijednost r12 po koracima (u jednom bloku), -||- od početka simulacije
             itmp = (int)(round(ratio * 100.));
-            printf("%6d. blok:  %d%% prihvacenih,  Eb = %10.2e\n", NbEff, itmp, StE / Nt);
+            printf("%6d. blok:  %d%% prihvacenih,  Eb = %10.2e, r2b=%f\n", NbEff, itmp, StE / Nt, Str / Nt);
         }
     } // kraj petlje blokova
 
-    for (i = 1; i <= N_r12_dist; i++) // po binovima raspodjele r12
+    double ukupni_br = Nw*NbEff*Nt;
+
+    for (i = 0; i < N_r12_dist; i++) // po binovima raspodjele r12
     {
-        fprintf(data_r12, "%f\t%f\t\n", (double)i * max_r12 / 100.0, r12_dist[i]);
+        fprintf(data_r12, "%f\t%f\t\n", (double)(i+0.5) * max_r12 / N_r12_dist, r12_dist[i]/ukupni_br);
     }
 
-    for (i = 1; i <= N_angles_dist; i++) // po binovima raspodjele kutova
+    // for (i = 1; i <= N_angles_dist; i++) // po binovima raspodjele kutova
+    for (i = 0; i < N_angles_dist; i++) // po binovima raspodjele kutova
     {
-        fprintf(data_angles, "%f\t%f\t\n", (double)i * max_angle / 100, angles_dist[i]);
+        printf("%f\t%f\t%f\t%f\n", (double)(i+0.5) * max_angle / N_angles_dist, angles_gamma_dist[i]/ukupni_br, angles_beta_dist[i]/ukupni_br, angles_alpha_dist[i]/ukupni_br);
+        fprintf(data_angles, "%f\t%f\t%f\t%f\n", (double)(i+0.5) * max_angle / N_angles_dist, angles_gamma_dist[i]/ukupni_br, angles_beta_dist[i]/ukupni_br, angles_alpha_dist[i]/ukupni_br);
     }
 
-    for (i = 1; i <= N_r12_r13_dist; i++) // po binovima raspodjele r12 i r13
+    for (i = 0; i < N_r12_r13_dist; i++) // po binovima raspodjele r12 i r13
     {
-        for (k = 1; k <= N_r12_r13_dist; k++)
+        for (k = 0; k < N_r12_r13_dist; k++)
         {
-            fprintf(data_r12_r13, "%f\t%f\t%f\n", (double)i * max_r12 / 100, (double)k * max_r13 / 100, r12_r13_dist[i][k]);
+            fprintf(data_r12_r13, "%f\t%f\t%f\n", (double)(i+0.5) * max_r12 / 100, (double)(k+0.5) * max_r13 / 100, r12_r13_dist[i][k]/ukupni_br);
         }
     }
 
@@ -261,9 +301,12 @@ void VMC(double *E_return, double *sigmaE_return, int Nt, int Nw, int Nb, int Nb
 
     AE = SbE / NbEff;
     sigmaE = sqrt(fabs(SbE2 / NbEff - AE * AE) / (NbEff - 1.));
+    Ar = Sbr / NbEff;
+    sigmar = sqrt(fabs(Sbr2 / NbEff - Ar * Ar) / (NbEff - 1.));
     printf(" konacni max. korak: %6.2e\n", dxyMax);
     printf(" alpha = %f, gamma = %f, s = %f\n", alpha, gamma_var, s);
     printf(" E = %8.5e +- %6.2e \n\n", AE, sigmaE);
+    printf(" r2 = %8.5e +- %6.2e \n\n", Ar, sigmar);
     *E_return = AE;
     *sigmaE_return = sigmaE;
     fclose(data);
