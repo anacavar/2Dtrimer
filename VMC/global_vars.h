@@ -1,1 +1,1 @@
-extern double alpha, gamma_var, s;
+extern double alpha, gamma_var, s, epsilon;

@@ -21,7 +21,7 @@
 #define N_r12_r13_dist 100     // broj binova za distribuciju r12 i r13 - pazi, 1000 mu bude previše
 #define N_angles_dist 1000      // broj binova za distribuciju kuteva
 #define sigma 4 * A            // angstrema
-#define epsilon 12 * k_B *K    // dubina jame, u kelvinima preko boltzmannove konstante
+#define epsilon_initial 12 * k_B *K    // dubina jame, u kelvinima preko boltzmannove konstante
 // #define sigma 8 * A            // angstrema
 // #define epsilon 20 * k_B *K    // dubina jame, u kelvinima preko boltzmannove konstante
 #define L0 30. * A             // angstrema
@@ -42,7 +42,7 @@ double E_pot_L(double, double, double);                                         
 double f_ddr(double), f_dr(double);
 
 // OČEKIVANA ENERGIJA BI TREBALA BITI OKO -5 KELVINA
-void VMC(double *E_return, double *sigmaE_return, int Nt, int Nw, int Nb, int NbSkip)
+void VMC(double *E_return, double *sigmaE_return, double *r2_return, double *sigmar2_return, int Nt, int Nw, int Nb, int NbSkip)
 {
     printf("\nVMC:\n Nt=%d; Nw=%d; Nb=%d; NbSkip=%d\n", Nt, Nw, Nb, NbSkip);
 #pragma region // VARIJABLE
@@ -326,12 +326,14 @@ void VMC(double *E_return, double *sigmaE_return, int Nt, int Nw, int Nb, int Nb
     sigmar = sqrt(fabs(Sbr2 / NbEff - Ar * Ar) / (NbEff - 1.));
     sigmar2 = sqrt(fabs(Sb_r2_2 / NbEff - Ar2 * Ar2) / (NbEff - 1.));
     printf(" konacni max. korak: %6.2e\n", dxyMax);
-    printf(" alpha = %f, gamma = %f, s = %f\n", alpha, gamma_var, s);
+    printf(" alpha = %f, gamma = %f, s = %f, epsilon = %f\n", alpha, gamma_var, s, epsilon);
     printf(" E = %8.5e +- %6.2e \n", AE, sigmaE);
     printf(" r = %8.5e +- %6.2e \n", Ar, sigmar);
     printf(" r2 = %8.5e +- %6.2e \n\n", Ar2, sigmar2);
     *E_return = AE;
     *sigmaE_return = sigmaE;
+    *r2_return = Ar2;
+    *sigmar2_return = sigmar2;
     fclose(data);
     fclose(data_angles);
     fclose(data_r12);

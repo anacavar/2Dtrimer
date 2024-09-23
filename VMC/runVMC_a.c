@@ -2,30 +2,28 @@
 #include "VMC.c"
 #include "global_vars.h"
 
-double alpha, gamma_var, s;
+double alpha, gamma_var, s, epsilon;
 
 int main(int argc, char *argv[])
 {
-  int Nt = 1000, Nw = 100, Nb = 250, NbSkip = 50;
+  int Nt = 500, Nw = 80, Nb = 130, NbSkip = 30;
 
-  // double da;
+
+  // epsilon = epsilon_initial;
+  epsilon = 8;
+  // alpha = alpha_initial;
+  alpha = 4.4;
+
   double dg;
   double ds;
-  // run 1
-  // double gamma_min = 8, gamma_max = 10;
-  // double s_min = 0.1, s_max = 0.3;
-  double gamma_min = 12, gamma_max = 15.5;
-  // double s_min = 0.2, s_max = 0.4;
-  // double s_min = 0.4, s_max = 0.7;
-  // double s_min = 0, s_max = 0.35;
-  double s_min = 0.2, s_max = 0.5;
+  double gamma_min = 4.77, gamma_max = 15.5;
+  double s_min = 0.05, s_max = 0.5;
   double E, sigmaE;
-  // int N_gamma = 5;
-  int N_gamma = 3;
+  double r2, sigmar2;
+  int N_gamma = 1;
   int N_s = 5;
   int count;
   dg = (gamma_max - gamma_min) / N_gamma;
-  // da = (alpha_max - alpha_min) / N_alpha;
   ds = (s_max - s_min) / N_s;
   FILE *dataEs, *parameters_log;
   dataEs = fopen("dataEa.txt", "w");
@@ -35,8 +33,6 @@ int main(int argc, char *argv[])
     count=0;
     int Nt = atoi(argv[1]), Nw = atoi(argv[2]), Nb = atoi(argv[3]), NbSkip = atoi(argv[4]);
     printf("%d %d %d %d\n", Nt, Nw, Nb, NbSkip);
-    // ako variramo uz konstantni s
-    alpha = alpha_initial;
     for (int ig = 0; ig < N_gamma; ig++)
     {
       // za zadani s, za svaki gamma, ili gamma? variraš alpha...
@@ -48,15 +44,14 @@ int main(int argc, char *argv[])
         fprintf(parameters_log, "%d\tg=%f\ta=%f\ts=%f\n", count, gamma_var, alpha, s);
         printf("%d. alpha=%f; gamma=%f; s=%f\n", count, alpha, gamma_var, s);
         // izvrti program..
-        VMC(&E, &sigmaE, Nt, Nw, Nb, NbSkip);
-        fprintf(dataEs, "%f\t%f\t%f\t%f\n", E, sigmaE, alpha, gamma_var);
+        VMC(&E, &sigmaE, &r2, &sigmar2, Nt, Nw, Nb, NbSkip);
+        fprintf(dataEs, "%f\t%f\t%f\t%f\n", E, sigmaE, alpha, gamma_var, s);
       }
     }
   }
   else if(argc == 1){
     count=0;
     printf("Started with default parameters\n");
-    alpha = alpha_initial; // za konstantni gamma
     for (int ig = 0; ig < N_gamma; ig++)
     {
       gamma_var = gamma_min + ig * dg;
@@ -67,7 +62,7 @@ int main(int argc, char *argv[])
         fprintf(parameters_log, "%d.\tg=%f\ta=%f\ts=%f\n", count, gamma_var, alpha, s);
         printf("%d. alpha=%f; gamma=%f; s=%f\n", count, alpha, gamma_var, s);
         // izvrti program..
-        VMC(&E, &sigmaE, Nt, Nw, Nb, NbSkip);
+        VMC(&E, &sigmaE, &r2, &sigmar2, Nt, Nw, Nb, NbSkip);
         fprintf(dataEs, "%f\t%f\t%f\t%f\t%f\n", E, sigmaE, alpha, gamma_var, s);
       }
     }
