@@ -6,21 +6,21 @@ double alpha, gamma_var, s, epsilon;
 
 int main(int argc, char *argv[])
 {
-  int Nt = 500, Nw = 80, Nb = 130, NbSkip = 30;
+  int Nt = 500, Nw = 150, Nb = 150, NbSkip = 30;
 
   // epsilon = epsilon_initial;
-  epsilon = 8;
-  s = 0.15;
+  epsilon = 6;
+  s = 0.082;
 
   double dg;
   double da;
 
-  double gamma_min = 4.5, gamma_max = 6;
-  double alpha_min = 4.4, alpha_max = 8.9;
+  double alpha_min = 4.32, alpha_max = 8.9;
+  double gamma_min = 4.6, gamma_max = 4.7;
   double E, sigmaE;
   double r2, sigmar2;
   int N_alpha = 1;
-  int N_gamma = 5;
+  int N_gamma = 6;
   int count;
   dg = (gamma_max - gamma_min) / N_gamma;
   da = (alpha_max - alpha_min) / N_alpha;

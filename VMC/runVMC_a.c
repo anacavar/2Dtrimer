@@ -6,18 +6,20 @@ double alpha, gamma_var, s, epsilon;
 
 int main(int argc, char *argv[])
 {
-  int Nt = 500, Nw = 80, Nb = 130, NbSkip = 30;
+  int Nt = 500, Nw = 80, Nb = 80, NbSkip = 30;
 
 
   // epsilon = epsilon_initial;
-  epsilon = 8;
+  // epsilon = 8;
+  // epsilon = 16.4;
+  epsilon = 6;
   // alpha = alpha_initial;
-  alpha = 4.4;
+  alpha = 4.3;
 
   double dg;
   double ds;
-  double gamma_min = 4.77, gamma_max = 15.5;
-  double s_min = 0.05, s_max = 0.5;
+  double gamma_min = 4.65, gamma_max = 15.5;
+  double s_min = 0.05, s_max = 0.11;
   double E, sigmaE;
   double r2, sigmar2;
   int N_gamma = 1;

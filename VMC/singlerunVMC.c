@@ -1,4 +1,3 @@
-
 #include <stdio.h>
 #include "VMC.c"
 #include "global_vars.h"
@@ -13,12 +12,12 @@ int main(int argc, char *argv[])
   // alpha = alpha_initial;
   // s = s_initial;
   // epsilon = epsilon_initial;
-  gamma_var = 4.8;
-  alpha = 4.4;
-  s = 0.15;
-  epsilon = 8;
+  epsilon = 6;
+  s = 0.082;
+  alpha = 4.32;
+  gamma_var = 4.61;
 
-  int Nt=500, Nw=80, Nb=130, NbSkip=30;
+  int Nt=500, Nw=100, Nb=250, NbSkip=50;
 
   if(argc == 5){
     int Nt = atoi(argv[1]), Nw = atoi(argv[2]), Nb = atoi(argv[3]), NbSkip = atoi(argv[4]);
