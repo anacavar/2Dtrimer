@@ -14,10 +14,15 @@
 // za Lennard-Jones:
 #define sigma 4 * A            // angstrema
 #define epsilon 12 * k_B *K    // dubina jame, u kelvinima preko boltzmannove konstante
+// #define sigma 8 * A            // angstrema
+// #define epsilon 20 * k_B *K    // dubina jame, u kelvinima preko boltzmannove konstante
 // za korelacijsku f-ju:
 #define alpha 4.55 * A // angstrema
 #define gamma 4.77     // eksponent u probnoj valnoj funkciji
 #define s 0.3 / A      // 1/A - eksponent u probnoj valnoj funkciji
+// #define alpha 9.0 * A // angstrema
+// #define gamma 9     // eksponent u probnoj valnoj funkciji
+// #define s 0.1 / A      // 1/A - eksponent u probnoj valnoj funkciji
 
 double Psi(double r) // korelacijska funkcija
 {

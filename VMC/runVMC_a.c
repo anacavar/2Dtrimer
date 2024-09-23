@@ -6,23 +6,30 @@ double alpha, gamma_var, s;
 
 int main(int argc, char *argv[])
 {
+  int Nt = 1000, Nw = 100, Nb = 250, NbSkip = 50;
+
   // double da;
   double dg;
   double ds;
-  // double alpha_min = 4.40, alpha_max = 4.70;
-  double gamma_min = 4.68, gamma_max = 4.95;
-  double s_min = 0.26, s_max = 0.38;
+  // run 1
+  // double gamma_min = 8, gamma_max = 10;
+  // double s_min = 0.1, s_max = 0.3;
+  double gamma_min = 12, gamma_max = 15.5;
+  // double s_min = 0.2, s_max = 0.4;
+  // double s_min = 0.4, s_max = 0.7;
+  // double s_min = 0, s_max = 0.35;
+  double s_min = 0.2, s_max = 0.5;
   double E, sigmaE;
-  // int N_alpha = 5;
-  int N_gamma = 7;
-  int N_s = 10;
+  // int N_gamma = 5;
+  int N_gamma = 3;
+  int N_s = 5;
   int count;
   dg = (gamma_max - gamma_min) / N_gamma;
   // da = (alpha_max - alpha_min) / N_alpha;
   ds = (s_max - s_min) / N_s;
   FILE *dataEs, *parameters_log;
   dataEs = fopen("dataEa.txt", "w");
-  parameters_log = fopen("parameters_log.txt", "w");
+  parameters_log = fopen("parameters_log_a.txt", "w");
 
   if(argc == 5){
     count=0;
@@ -49,9 +56,8 @@ int main(int argc, char *argv[])
   else if(argc == 1){
     count=0;
     printf("Started with default parameters\n");
-    int Nt = 1000, Nw = 100, Nb = 220, NbSkip = 20;
     alpha = alpha_initial; // za konstantni gamma
-    for (int ig = 0; ig < N_s; ig++)
+    for (int ig = 0; ig < N_gamma; ig++)
     {
       gamma_var = gamma_min + ig * dg;
       for (int is = 0; is < N_s; is++)

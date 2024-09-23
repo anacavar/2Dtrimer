@@ -1,3 +1,6 @@
+unset xrange
+unset yrange
+unset label
 set xlabel "r"
 set ylabel ""
 set terminal png
@@ -6,6 +9,7 @@ set xrange[-0:15]
 set yrange[-15:25]
 set xzeroaxis
 set yzeroaxis
+set label "početni parametri α=4.55, γ=4.77, s=0.30" at graph 0.05, 0.95 front
 set style line 1 lt 2 lc rgb "black" lw 2 dashtype 2  # Set dashed line style
 set arrow from graph 0, -12 to graph 1, -12 nohead ls 1  # Dashed line at y=-12
 set label "Y = -12" at graph 0.05, -12 left  # Add label to the line

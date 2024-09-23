@@ -14,6 +14,8 @@ int main(int argc, char *argv[])
   // gamma_var = 4.8;
   // alpha = 4.50;
   // s = 0.28;
+  int Nt=1000, Nw=100, Nb=250, NbSkip=50;
+
 
   if(argc == 5){
     int Nt = atoi(argv[1]), Nw = atoi(argv[2]), Nb = atoi(argv[3]), NbSkip = atoi(argv[4]);
@@ -24,7 +26,6 @@ int main(int argc, char *argv[])
     // int Nt = 1000, Nw = 100, Nb = 220, NbSkip = 20;
     // int Nt = 1000, Nw = 300, Nb = 350, NbSkip = 50;
     // int Nt = 1000, Nw = 300, Nb = 350, NbSkip = 50;
-    int Nt=1000, Nw=500, Nb=150, NbSkip=50;
     VMC(&E, &sigmaE, Nt, Nw, Nb, NbSkip);
   }
   else{
