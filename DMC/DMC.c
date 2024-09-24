@@ -95,7 +95,7 @@ void DMC(double *E_return, double *sigmaE_return, int Nt, int Nw0, int Nb, int N
   double SbE;                                  // = suma (srednjih E) po blokovima
   double SbE2;                                 // = suma (srednjih E^2) po blokovima
   double Swr, Str, Sbr, Sbr2;                  // za srednju kvadratnu vrijednost r
-  double Sw_r2, St_r2, Sb_r2, Sb_r2_2;            // za srednju kvadratnu vrijednost r
+  double Sw_r2, St_r2, Sb_r2, Sb_r2_2;         // za srednju kvadratnu vrijednost r
   double Ar, sigmar;
   double Ar2, sigmar2;
   double AE, sigmaE;                           // srednja vrijednost i standardna devijacija
@@ -105,21 +105,21 @@ void DMC(double *E_return, double *sigmaE_return, int Nt, int Nw0, int Nb, int N
   int plus_minus = 0, deltaNw, count;          // broj dodanih/oduzetih pojedinih šetača
   float remainder;                             // ostatak dijeljenja
   double fddr_value[3], fdr_value[3];          // radi logiranja vrijedosti f_dr i f_ddr
-  double max_r12 = 20, max_r13=20, max_angle = 180;      // max_angle je pi, koje su dobre vrijednosti max_r12 i max_r13?
+  double max_r12 = 20, max_r13=20, max_angle = 180;      // maksimalne vrijednosti za distribucije
   double r12_dist[N_r12_dist], angles_alpha_dist[N_angles_dist], angles_beta_dist[N_angles_dist], angles_gamma_dist[N_angles_dist]; // distribucija duljina r12 i kuteva
   double r12_r13_dist[N_r12_r13_dist][N_r12_r13_dist];     // distribucija duljina r12 i r13
-  int n, m;                                       // indeksi za distribucije
-  double angle_alpha, angle_beta, angle_gamma;                                // kut između r12 i r13 trimera (za svakog šetača posebno)
+  int n, m;                                    // indeksi za distribucije
+  double angle_alpha, angle_beta, angle_gamma; // kutovi trimera
   double x_acos;
-  double x1, x2, x3, y1, y2, y3, x_CM, y_CM, r2_MSD;
+  double x1, x2, x3, y1, y2, y3, x_CM, y_CM, r2_MSD;  // koordinate centra mase trimera
 #pragma endregion
 
   printf("\nDMC:\n Nt=%d; Nw0=%d; Nb=%d; NbSkip=%d\n", Nt, Nw0, Nb, NbSkip);
 
   FILE *data, *VMC_coordinates, *data_log, *data_r12, *data_angles, *data_coordinates, *data_r12_r13;
   data = fopen("data.txt", "w");
-  // VMC_coordinates = fopen("../VMC/VMC_data_coordinates.txt", "r");  
-  VMC_coordinates = fopen("VMC_data_coordinates.txt", "r");  
+  VMC_coordinates = fopen("../VMC/VMC_data_coordinates.txt", "r"); // za lokalno pokretanje
+  // VMC_coordinates = fopen("VMC_data_coordinates.txt", "r");  // za pokretanje na udaljenom serveru
   if (VMC_coordinates == NULL) {
     printf("Error opening VMC_coordinates file.\n");
     exit(1);
@@ -137,6 +137,7 @@ void DMC(double *E_return, double *sigmaE_return, int Nt, int Nw0, int Nb, int N
     W_Rpw[i].index = i;
   }
 
+  // distirbucije pucaju na udaljenom serveru
   // // Initialize 1D arrays
   // for (int i = 0; i < N_r12_dist; i++) {
   //   r12_dist[i] = 0.0;
@@ -170,7 +171,7 @@ void DMC(double *E_return, double *sigmaE_return, int Nt, int Nw0, int Nb, int N
     E_L[iw] = E_kin_calc + E_pot_calc;
     SwE += E_L[iw];
   }
-  E_R = SwE / Nw; // prosječna energija po šetačima = -5.271490
+  E_R = SwE / Nw; // početna prosječna energija po šetačima = -5.271490
 
   SbE = 0.;
   SbE2 = 0;
@@ -271,22 +272,17 @@ void DMC(double *E_return, double *sigmaE_return, int Nt, int Nw0, int Nb, int N
         }
 
         // račun lokalne energije (kinetički + potencijalni dio):
-        // ZAŠTO JE OVDJE PRIME?????
         r12 = sqrt(pow((x_pw_prime[2] - x_pw_prime[1]), 2) + pow((y_pw_prime[2] - y_pw_prime[1]), 2));
         r23 = sqrt(pow((x_pw_prime[3] - x_pw_prime[2]), 2) + pow((y_pw_prime[3] - y_pw_prime[2]), 2));
         r13 = sqrt(pow((x_pw_prime[3] - x_pw_prime[1]), 2) + pow((y_pw_prime[3] - y_pw_prime[1]), 2));
-        // r12 = sqrt(pow((x_a[2] - x_pw_prime[1]), 2) + pow((y_pw_prime[2] - y_pw_prime[1]), 2));
-        // r23 = sqrt(pow((x_pw_prime[3] - x_pw_prime[2]), 2) + pow((y_pw_prime[3] - y_pw_prime[2]), 2));
-        // r13 = sqrt(pow((x_pw_prime[3] - x_pw_prime[1]), 2) + pow((y_pw_prime[3] - y_pw_prime[1]), 2));
 
         E_kin_calc = E_kin_L(r12, r13, r23, x_pw_prime[1], x_pw_prime[2], x_pw_prime[3], y_pw_prime[1], y_pw_prime[2], y_pw_prime[3]);
         E_pot_calc = E_pot_L(r12, r13, r23);
         E_L_prime = E_kin_calc + E_pot_calc;
 
         // korak 8. - određivanje statističke težine W(R'_p(w)) - (E_L bez crtanog je iz prošlog koraka (stara energija), E_L' je iz trenutnog koraka (nova energija))
-        W_Rpw_value = exp(-(0.5 * (E_L[iw] + E_L_prime) - E_R) * dtau);
+        W_Rpw_value = exp(-(0.5 * (E_L[iw] + E_L_prime) - E_R) * dtau); // E_R ovdje je prosjek koji se mijenja kroz simulaciju pri svakom koraku
 
-        // cappaj W_Rpw_value vrijednost jer ak ode u infinity onda mi trga kod...
         if(W_Rpw_value>1000) {
           // printf("W_Rpw_value overflow! (extreme number)\n");
           W_Rpw_value = 1000;
@@ -297,7 +293,7 @@ void DMC(double *E_return, double *sigmaE_return, int Nt, int Nw0, int Nb, int N
           W_Rpw_value = 1000;
         }
 
-        W_Rpw[iw-1].value = W_Rpw_value; // E_R ovdje je prosjek koji se mijenja kroz simulaciju pri svakom koraku
+        W_Rpw[iw-1].value = W_Rpw_value; 
         W_Rpw[iw-1].index = iw;
 
         // korak 9. - stohastička procjena broja potomaka
@@ -324,6 +320,7 @@ void DMC(double *E_return, double *sigmaE_return, int Nt, int Nw0, int Nb, int N
 
         E_L[iw] = E_L_prime;
 
+        // // distribucija radi probleme na udaljenom serveru
         // // ubacujemo svakog šetača u svakom koraku u distribucije ako je simulacija stabilizirana (NbSkip blokova preskočeno)
         // if (ib > NbSkip && n_w[iw]!=0)
         // {
@@ -371,9 +368,8 @@ void DMC(double *E_return, double *sigmaE_return, int Nt, int Nw0, int Nb, int N
       sum_nw = dodavanje - oduzimanje;
       
       // (>130%) ako je suma dodanih šetača veća od preostalog slobodnog prostora u listi (>130%)
-      if (dodavanje > deltaNw+oduzimanje) // što za sum_nw < -Nw_max ?
+      if (dodavanje > deltaNw+oduzimanje) 
       {
-        // printf(">130posto ib:%d; it:%d; iw:%d\n", ib, it, iw);
         count = 0; 
         for (iw = 1; iw <= Nw; iw++) 
         { 
@@ -388,7 +384,7 @@ void DMC(double *E_return, double *sigmaE_return, int Nt, int Nw0, int Nb, int N
             if (remainder >= 0.5){
               plus_minus += 1; // round up
             }
-            count += plus_minus; // jer ovo može bit negativno ako je previše nula a svi ovi ostali se vrate u 1
+            count += plus_minus; 
 
             if (count > deltaNw+oduzimanje) 
             {
@@ -399,8 +395,10 @@ void DMC(double *E_return, double *sigmaE_return, int Nt, int Nw0, int Nb, int N
           //dodat još jednu iteraciju dok se count sigurno ne popuni...
           n_w[iw] = 1 + plus_minus; 
         }
+        // sljedeće dvije petlje su dopunjavanje do maksimalne popunjenosti liste, prvo prema prioritetu, a onda po redu
         int first_iteration = 1;
-        while(count < deltaNw+oduzimanje){
+        while(count < deltaNw+oduzimanje) // dopunjavanje prema prioritetu
+        {
           if(first_iteration == 1){
             for(iw = 1; iw <= Nw; iw++){
               if(n_w[iw]>1){
@@ -413,7 +411,8 @@ void DMC(double *E_return, double *sigmaE_return, int Nt, int Nw0, int Nb, int N
             }
             first_iteration=0;
           }
-          else if(first_iteration==0 && count<deltaNw+oduzimanje){
+          else if(first_iteration==0 && count<deltaNw+oduzimanje) // dopunjavanje po redu
+          {
             for(iw = 1; iw <= Nw; iw++){
               if(n_w[iw]>0){
                 n_w[iw]++;
@@ -471,10 +470,11 @@ void DMC(double *E_return, double *sigmaE_return, int Nt, int Nw0, int Nb, int N
             n_w[indeks + in] = n_w_temp[iw];
           } 
         }
-        indeks += n_w_temp[iw]; // možda tu treba nadodat samo razliku?
+        indeks += n_w_temp[iw]; 
       }
       Nw = indeks; 
 
+      // skupljanje podataka po šetačima nakon redistribucije, prije kraja koraka
       for(iw = 1; iw<=Nw; iw++){
         r12 = sqrt(pow((x[1][iw] - x[2][iw]), 2) + pow((y[1][iw] - y[2][iw]), 2));
         SwE += E_L[iw];
@@ -516,6 +516,8 @@ void DMC(double *E_return, double *sigmaE_return, int Nt, int Nw0, int Nb, int N
     }
   } // kraj petlje blokova
 
+
+  // // distribucije rade probleme na udaljenom serveru
   // double ukupni_br = Nw0*NbEff*Nt;
 
   // for (i = 0; i < N_r12_dist; i++) // po binovima raspodjele r12

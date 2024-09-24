@@ -2,24 +2,17 @@
 #include "DMC.c"
 #include "global_vars.h"
 
-// double alpha, gamma_var, s;
-// #define dtau 1.0 * pow(10, -3) / K                       // korak vremena ∆τ (10^(-6) 1/mK)
-
 double gamma_var, alpha, s, dtau;
 
 int main()
 {
-  // int Nt=1000, Nw=300, Nb=250, NbSkip=50;
   int Nt=500, Nw=100, Nb=220, NbSkip=20;
 
-  // vjerojatno ovo treba prebaciti u singlerun i run datoteke.
   char batchScript[256];
   snprintf(batchScript, sizeof(batchScript), "C:\\repos\\2Dtrimer\\DMC\\prerunVMC.bat %d %d %d %d", Nt, Nw, Nb, NbSkip);
-  // system(batchScript);
+  // system(batchScript); // za prethodno pokretanje VMC, kako bi odgovarali početni parametri šetača
 
   double d_dtau;
-  // double dtau_min = 0.1 * pow(10, -5), dtau_max = 1.0 * pow(10, -2); // su kolki??
-  // double dtau_min = 0.1 * pow(10, -3), dtau_max = 1.0 * pow(10, -3); // su kolki??
   double E, sigmaE;
   FILE *dataE_dtau;
   dataE_dtau = fopen("dataE_dtau.txt", "w");
