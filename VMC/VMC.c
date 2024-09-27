@@ -17,22 +17,30 @@
 #define hbar2 4.851159708 * 10 * k_B *K *pow(A, 2) * u // (reducirana planckova konstanta)^2
 #define hbar2_si 1.112121717 * pow(10, -68)            // (Js)^2 = (m2kg/s)^2
 // početne vrijednosti
-#define N_r12_dist 1000         // broj binova za distribuciju r12
-#define N_r12_r13_dist 100     // broj binova za distribuciju r12 i r13 - pazi, 1000 mu bude previše
-#define N_angles_dist 1000      // broj binova za distribuciju kuteva
-#define sigma 4 * A            // angstrema
-#define epsilon_initial 12 * k_B *K    // dubina jame, u kelvinima preko boltzmannove konstante
-// #define sigma 8 * A            // angstrema
-// #define epsilon 20 * k_B *K    // dubina jame, u kelvinima preko boltzmannove konstante
+#define N_r12_dist 1000                   // broj binova za distribuciju r12
+#define N_r12_r13_dist 100                // broj binova za distribuciju r12 i r13 - pazi, 1000 mu bude previše
+#define N_angles_dist 1000                // broj binova za distribuciju kuteva
 #define L0 30. * A             // angstrema
-#define alpha_initial 4.55 * A // angstrema
-#define gamma_initial 4.77     // eksponent u probnoj valnoj funkciji
-#define s_initial 0.3 / A      // eksponent u probnoj valnoj funkciji A^-1
-
-// #define alpha_initial 8.3 * A // angstrema
-// #define gamma_initial 12     // eksponent u probnoj valnoj funkciji
-// #define s_initial 0.2 / A      // eksponent u probnoj valnoj funkciji A^-1
 #define mass 4. * u            // u
+// // U1
+// #define sigma 4 * A                    // angstrema
+// #define epsilon_initial 12 * k_B *K    // dubina jame, u kelvinima preko boltzmannove konstante
+// #define alpha_initial 4.55 * A         // angstrema
+// #define gamma_initial 4.77             // eksponent u probnoj valnoj funkciji
+// #define s_initial 0.3 / A              // eksponent u probnoj valnoj funkciji A^-1
+// U2
+#define sigma 8 * A                    // angstrema
+#define epsilon_initial 20 * k_B *K    // dubina jame, u kelvinima preko boltzmannove konstante
+#define alpha_initial 9.2 * A         // angstrema
+#define gamma_initial 7.75             // eksponent u probnoj valnoj funkciji
+#define s_initial 0.75 / A              // eksponent u probnoj valnoj funkciji A^-1
+// // U3
+// #define sigma 4 * A            // angstrema
+// #define epsilon_initial 33.2 * k_B *K    // dubina jame, u kelvinima preko boltzmannove konstante
+// #define alpha_initial 4.82 * A // angstrema
+// #define gamma_initial 5.10     // eksponent u probnoj valnoj funkciji
+// #define s_initial 0.77 / A      // eksponent u probnoj valnoj funkciji A^-1
+
 
 // deklaracija funkcija
 double Psi(double);                                                                     // probna valna funkcija (korelacijska funkcija)

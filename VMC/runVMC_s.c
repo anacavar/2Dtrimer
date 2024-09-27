@@ -6,24 +6,24 @@ double alpha, gamma_var, s, epsilon;
 
 int main(int argc, char *argv[])
 {
-  int Nt = 500, Nw = 150, Nb = 150, NbSkip = 30;
+  int Nt = 500, Nw = 100, Nb = 150, NbSkip = 50;
 
-  // epsilon = epsilon_initial;
-  epsilon = 6;
-  s = 0.082;
+  epsilon = epsilon_initial;
+  // s = s_initial;
+  s=0.68;
 
   double dg;
   double da;
 
-  double alpha_min = 4.32, alpha_max = 8.9;
-  double gamma_min = 4.6, gamma_max = 4.7;
+  double alpha_min = 9.1, alpha_max = 10.1;
+  double gamma_min = 5.7, gamma_max = 8;
   double E, sigmaE;
   double r2, sigmar2;
-  int N_alpha = 1;
-  int N_gamma = 6;
+  int N_alpha = 5;
+  int N_gamma = 10;
   int count;
-  dg = (gamma_max - gamma_min) / N_gamma;
   da = (alpha_max - alpha_min) / N_alpha;
+  dg = (gamma_max - gamma_min) / N_gamma;
   FILE *dataEs, *parameters_log;
   dataEs = fopen("dataEs.txt", "w");
   parameters_log = fopen("parameters_log_s.txt", "w");
@@ -34,7 +34,6 @@ int main(int argc, char *argv[])
     printf("%d %d %d %d\n", Nt, Nw, Nb, NbSkip);
     for (int ia = 0; ia < N_alpha; ia++)
     {
-      // za zadani s, za svaki gamma, ili gamma? variraš alpha...
       alpha = alpha_min + ia * da;
       for (int ig = 0; ig < N_gamma; ig++)
       {
@@ -51,12 +50,12 @@ int main(int argc, char *argv[])
   else if(argc == 1){
     count=0;
     printf("Started with default parameters\n");
-    for (int ig = 0; ig < N_gamma; ig++)
+    for (int ia = 0; ia < N_alpha; ia++)
     {
-      gamma_var = gamma_min + ig * dg;
-      for (int ia = 0; ia < N_alpha; ia++)
+      alpha = alpha_min + ia * da;
+      for (int ig = 0; ig < N_gamma; ig++)
       {
-        alpha = alpha_min + ia * da;
+        gamma_var = gamma_min + ig * dg;
         count++;
         printf("%d. alpha=%f; gamma=%f; s=%f\n", count, alpha, gamma_var, s);
         fprintf(parameters_log, "%d.\tg=%f\ta=%f\ts=%f\n", count, gamma_var, alpha, s);

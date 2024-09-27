@@ -3,13 +3,13 @@ unset yrange
 unset label
 set xlabel "r"
 set ylabel ""
-set terminal png
+set terminal png size 800, 600
 set output 'potencijal_valna.png'
-set xrange[-0:15]
-set yrange[-15:25]
+set xrange[0:30]
+set yrange[-25:25]
 set xzeroaxis
 set yzeroaxis
-set label "početni parametri α=4.55, γ=4.77, s=0.30" at graph 0.05, 0.95 front
+set label "početni parametri α=9.2 Å, γ=7.75, s=0.75 Å^{-1}" at graph 0.05, 0.95 front
 set style line 1 lt 2 lc rgb "black" lw 2 dashtype 2  # Set dashed line style
 set arrow from graph 0, -12 to graph 1, -12 nohead ls 1  # Dashed line at y=-12
 set label "Y = -12" at graph 0.05, -12 left  # Add label to the line

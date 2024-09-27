@@ -6,20 +6,19 @@ double alpha, gamma_var, s, epsilon;
 
 int main(int argc, char *argv[])
 {
-  int Nt = 500, Nw = 80, Nb = 80, NbSkip = 40;
+  int Nt = 500, Nw = 100, Nb = 150, NbSkip = 50;
 
   epsilon = epsilon_initial;
-  gamma_var = gamma_initial;
+  // gamma_var = gamma_initial;
+  gamma_var = 7.4;
 
   double ds;
   double da;
-  // double s_min = 0.35, s_max = 0.55;
-  double s_min = 0.3, s_max = 0.55;
-  // double alpha_min = 4, alpha_max = 5;
-  double alpha_min = 4.535, alpha_max = 4.60;
+  double s_min = 0.6, s_max = 0.75;
+  double alpha_min = 9, alpha_max = 9.7;
   double E, sigmaE;
   double r2, sigmar2;
-  int N_s = 1;
+  int N_s = 5;
   int N_alpha = 10;
   int count;
   da = (alpha_max - alpha_min) / N_alpha;
@@ -44,7 +43,7 @@ int main(int argc, char *argv[])
         printf("%d. alpha=%f; gamma=%f; s=%f\n", count, alpha, gamma_var, s);
         // izvrti program..
         VMC(&E, &sigmaE, &r2, &sigmar2, Nt, Nw, Nb, NbSkip);
-        fprintf(dataEs, "%f\t%f\t%f\t%f\t%f\n", E, sigmaE, alpha, gamma_var, s, r2);
+        fprintf(dataEs, "%f\t%f\t%f\t%f\t%f\t%f\n", E, sigmaE, alpha, gamma_var, s, r2);
       }
     }
   }

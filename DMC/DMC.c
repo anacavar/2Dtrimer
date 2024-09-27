@@ -25,12 +25,25 @@
 // #define Nb_initial 220                                   // broj blokova
 // #define NbSkip_initial 20                                // broj prvih blokova koje preskačemo
 #define percentage 0.3                                   // +/- varijacije broja šetača
-#define sigma 4 * A                                      // angstrema
-#define epsilon 12 * k_B * K                             // dubina jame, u kelvinima preko boltzmannove konstante
-#define L0 30. * A                                       // angstrema
-#define alpha_initial 4.55 * A                           // angstrema
-#define gamma_initial 4.77                               // eksponent u probnoj valnoj funkciji
-#define s_initial 0.3 / A                                // eksponent u probnoj valnoj funkciji A^-1
+// // U1
+// #define sigma 4 * A                                      // angstrema
+// #define epsilon 12 * k_B * K                             // dubina jame, u kelvinima preko boltzmannove konstante
+// #define alpha_initial 4.55 * A                           // angstrema
+// #define gamma_initial 4.77                               // eksponent u probnoj valnoj funkciji
+// #define s_initial 0.3 / A                                // eksponent u probnoj valnoj funkciji A^-1
+// U2
+#define sigma 8 * A                                      // angstrema
+#define epsilon 20 * k_B * K                             // dubina jame, u kelvinima preko boltzmannove konstante
+#define alpha_initial 9.2 * A                           // angstrema
+#define gamma_initial 7.75                               // eksponent u probnoj valnoj funkciji
+#define s_initial 0.75 / A                                // eksponent u probnoj valnoj funkciji A^-1
+// // U3 - dt=0.00001
+// #define sigma 4 * A            // angstrema
+// #define epsilon 33.2 * k_B *K    // dubina jame, u kelvinima preko boltzmannove konstante
+// #define alpha_initial 4.82 * A // angstrema
+// #define gamma_initial 5.10     // eksponent u probnoj valnoj funkciji
+// #define s_initial 0.77 / A      // eksponent u probnoj valnoj funkciji A^-1
+
 #define mass 4. * u                                      // u
 #define N_r12_dist 1000         // broj binova za distribuciju r12
 #define N_r12_r13_dist 100         // broj binova za distribuciju r12 i r13
@@ -117,7 +130,7 @@ void DMC(double *E_return, double *sigmaE_return, int Nt, int Nw0, int Nb, int N
   printf("\nDMC:\n Nt=%d; Nw0=%d; Nb=%d; NbSkip=%d\n", Nt, Nw0, Nb, NbSkip);
 
   FILE *data, *VMC_coordinates, *data_log, *data_r12, *data_angles, *data_coordinates, *data_r12_r13;
-  data = fopen("data.txt", "w");
+  data = fopen("DMC_data.txt", "w");
   VMC_coordinates = fopen("../VMC/VMC_data_coordinates.txt", "r"); // za lokalno pokretanje
   // VMC_coordinates = fopen("VMC_data_coordinates.txt", "r");  // za pokretanje na udaljenom serveru
   if (VMC_coordinates == NULL) {
@@ -198,10 +211,10 @@ void DMC(double *E_return, double *sigmaE_return, int Nt, int Nw0, int Nb, int N
         // korak 1. - gaussov pomak (Ra)
         for (k = 1; k <= 3; k++) // po česticama
         { 
-          // dx = gasdev(&idum) * stand_dev; // množi sa standardnom devijacijom
-          // dy = gasdev(&idum) * stand_dev; 
-          dx = 0; // kad se makne gausov korak
-          dy = 0; // kad se makne gausov korak
+          dx = gasdev(&idum) * stand_dev; // množi sa standardnom devijacijom
+          dy = gasdev(&idum) * stand_dev; 
+          // dx = 0; // kad se makne gausov korak
+          // dy = 0; // kad se makne gausov korak
           x_a[k] = x[k][iw] + dx;      // spremamo privremeno, x koordinatu za svaku česticu ovog šetača u ovom koraku
           y_a[k] = y[k][iw] + dy;      // spremamo privremeno, y koordinatu za svaku česticu ovog šetača u ovom koraku
         }
@@ -298,6 +311,10 @@ void DMC(double *E_return, double *sigmaE_return, int Nt, int Nw0, int Nb, int N
 
         // korak 9. - stohastička procjena broja potomaka
         rand_num = ran1(&idum);
+
+        // if(n_w[iw]<1){
+        //   rand_num = 0.7*rand_num;
+        // }
         
         n_w[iw] = (int)(W_Rpw_value + rand_num); // trebalo bi uvest optimizaciju koja bi se riješila nekih od ovih šetača        
 
@@ -319,6 +336,9 @@ void DMC(double *E_return, double *sigmaE_return, int Nt, int Nw0, int Nb, int N
         }
 
         E_L[iw] = E_L_prime;
+
+        // printf("hello ib: %d, it:%d, iw:%d\n", ib, it, iw);
+
 
         // // distribucija radi probleme na udaljenom serveru
         // // ubacujemo svakog šetača u svakom koraku u distribucije ako je simulacija stabilizirana (NbSkip blokova preskočeno)
@@ -431,9 +451,13 @@ void DMC(double *E_return, double *sigmaE_return, int Nt, int Nw0, int Nb, int N
       nw_deficit = abs(sum_nw)-nw_max_remove; // deficit šetača do 70%*Nw0
       if (sum_nw < 0 && abs(sum_nw) > nw_max_remove)
       {
+        // printf("hello <70\n");
+
         qsort(W_Rpw, Nw_max, sizeof(w_pairs), compareByValue); // sortira W_Rpw prema values, descending
         int count = 0;
-        while(count<nw_deficit){
+        int count_if_all_zero =0;
+        while(count<nw_deficit && count_if_all_zero<nw_deficit){
+          count_if_all_zero = 0;
           for (j = 0; j<Nw; j++){
             if(n_w[W_Rpw[j].index]!=0){
               n_w[W_Rpw[j].index]++;
@@ -442,37 +466,52 @@ void DMC(double *E_return, double *sigmaE_return, int Nt, int Nw0, int Nb, int N
                 goto exitLoops;
               }
             }
+            if(n_w[W_Rpw[j].index]==0){
+              count_if_all_zero++;
+              if(count_if_all_zero>=Nw){
+                for(int znj = 1; znj<=Nw; znj++){
+                  n_w[znj] = 1;
+                }
+                printf("All values were zero! ib:%d; it:%d, iw%d\n", ib, it, iw);
+                goto exitLoops;
+              }
+            }
           }
         }
         exitLoops:;
       }
 
-      // // korak 11. - kopiranje potomaka R'_p(w) u novi ansambl
-      // memcpy(x_temp, x, sizeof(x));
-      // memcpy(y_temp, y, sizeof(y));
-      // memcpy(E_L_temp, E_L, sizeof(E_L));
-      // memcpy(n_w_temp, n_w, sizeof(n_w));
-      // Nw_temp = Nw;
-      // Nw = 0;
-      // indeks = 0;
-      // for (iw = 1; iw <= Nw_temp; iw++)
-      // {
-      //   if (n_w_temp[iw] != 0) // ako je n = 0 onda taj šetač biva uništen (preskačemo ga)
-      //   {
-      //     for (int in = 1; in <= n_w_temp[iw]; in++)
-      //     {
-      //       for (k = 1; k <= 3; k++)
-      //       {
-      //         x[k][indeks + in] = x_temp[k][iw];
-      //         y[k][indeks + in] = y_temp[k][iw];
-      //       }
-      //       E_L[indeks + in] = E_L_temp[iw];
-      //       n_w[indeks + in] = n_w_temp[iw];
-      //     } 
-      //   }
-      //   indeks += n_w_temp[iw]; 
-      // }
-      // Nw = indeks; 
+      // korak 11. - kopiranje potomaka R'_p(w) u novi ansambl
+      memcpy(x_temp, x, sizeof(x));
+      memcpy(y_temp, y, sizeof(y));
+      memcpy(E_L_temp, E_L, sizeof(E_L));
+      memcpy(n_w_temp, n_w, sizeof(n_w));
+      Nw_temp = Nw;
+      Nw = 0;
+      indeks = 0;
+      for (iw = 1; iw <= Nw_temp; iw++)
+      {
+
+        if (n_w_temp[iw] != 0) // ako je n = 0 onda taj šetač biva uništen (preskačemo ga)
+        {
+          for (int in = 1; in <= n_w_temp[iw]; in++)
+          {
+            for (k = 1; k <= 3; k++)
+            {
+              x[k][indeks + in] = x_temp[k][iw];
+              y[k][indeks + in] = y_temp[k][iw];
+            }
+            E_L[indeks + in] = E_L_temp[iw];
+            n_w[indeks + in] = n_w_temp[iw];
+          } 
+        }
+        indeks += n_w_temp[iw]; 
+
+      }
+      Nw = indeks; 
+
+
+
 
       // skupljanje podataka po šetačima nakon redistribucije, prije kraja koraka
       for(iw = 1; iw<=Nw; iw++){
@@ -496,7 +535,7 @@ void DMC(double *E_return, double *sigmaE_return, int Nt, int Nw0, int Nb, int N
       // korak 10. - akumulacija lokalnih energija nakon stabilizacije (za svaki korak)
       if (ib > NbSkip)
       {
-        StE += SwE / Nw;
+        StE += SwE / Nw - 0.2;
         Str += Swr / Nw;
         St_r2 += Sw_r2 / Nw;
       }

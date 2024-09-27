@@ -12,17 +12,17 @@
 #define K 1.                   // kelvin
 
 // za Lennard-Jones:
-#define sigma 4 * A            // angstrema
-#define epsilon 12 * k_B *K    // dubina jame, u kelvinima preko boltzmannove konstante
-// #define sigma 8 * A            // angstrema
-// #define epsilon 20 * k_B *K    // dubina jame, u kelvinima preko boltzmannove konstante
+// #define sigma 4 * A            // angstrema
+// #define epsilon 12 * k_B *K    // dubina jame, u kelvinima preko boltzmannove konstante
+#define sigma 8 * A            // angstrema
+#define epsilon 20 * k_B *K    // dubina jame, u kelvinima preko boltzmannove konstante
 // za korelacijsku f-ju:
-#define alpha 4.55 * A // angstrema
-#define gamma 4.77     // eksponent u probnoj valnoj funkciji
-#define s 0.3 / A      // 1/A - eksponent u probnoj valnoj funkciji
-// #define alpha 9.0 * A // angstrema
-// #define gamma 9     // eksponent u probnoj valnoj funkciji
-// #define s 0.1 / A      // 1/A - eksponent u probnoj valnoj funkciji
+// #define alpha 4.55 * A // angstrema
+// #define gamma 4.77     // eksponent u probnoj valnoj funkciji
+// #define s 0.3 / A      // 1/A - eksponent u probnoj valnoj funkciji
+#define alpha 9.2 * A // angstrema
+#define gamma 7.75     // eksponent u probnoj valnoj funkciji
+#define s 0.75 / A      // 1/A - eksponent u probnoj valnoj funkciji
 
 double Psi(double r) // korelacijska funkcija
 {
@@ -54,7 +54,7 @@ int main(){
 
   for (int i = 0; i < N_POINTS; i++) {
     double x = X_MIN + i * step;    // Izračunaj trenutnu vrijednost x
-    fprintf(output_file, "%lf\t%lf\t%lf\t%lf\t%lf\n", x, U_LJ(x), 1200*Psi(x)*Psi(x), f_dr(x), f_ddr(x));  // Zapiši x i y u datoteku
+    fprintf(output_file, "%lf\t%lf\t%lf\t%lf\t%lf\n", x, U_LJ(x), 500000000.*Psi(x)*Psi(x), f_dr(x), f_ddr(x));  // Zapiši x i y u datoteku
   }
 
   fclose(output_file);
