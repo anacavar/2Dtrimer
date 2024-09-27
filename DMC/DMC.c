@@ -198,10 +198,10 @@ void DMC(double *E_return, double *sigmaE_return, int Nt, int Nw0, int Nb, int N
         // korak 1. - gaussov pomak (Ra)
         for (k = 1; k <= 3; k++) // po česticama
         { 
-          dx = gasdev(&idum) * stand_dev; // množi sa standardnom devijacijom
-          dy = gasdev(&idum) * stand_dev; 
-          // dx = 0; // kad se makne gausov korak
-          // dy = 0; // kad se makne gausov korak
+          // dx = gasdev(&idum) * stand_dev; // množi sa standardnom devijacijom
+          // dy = gasdev(&idum) * stand_dev; 
+          dx = 0; // kad se makne gausov korak
+          dy = 0; // kad se makne gausov korak
           x_a[k] = x[k][iw] + dx;      // spremamo privremeno, x koordinatu za svaku česticu ovog šetača u ovom koraku
           y_a[k] = y[k][iw] + dy;      // spremamo privremeno, y koordinatu za svaku česticu ovog šetača u ovom koraku
         }
@@ -447,32 +447,32 @@ void DMC(double *E_return, double *sigmaE_return, int Nt, int Nw0, int Nb, int N
         exitLoops:;
       }
 
-      // korak 11. - kopiranje potomaka R'_p(w) u novi ansambl
-      memcpy(x_temp, x, sizeof(x));
-      memcpy(y_temp, y, sizeof(y));
-      memcpy(E_L_temp, E_L, sizeof(E_L));
-      memcpy(n_w_temp, n_w, sizeof(n_w));
-      Nw_temp = Nw;
-      Nw = 0;
-      indeks = 0;
-      for (iw = 1; iw <= Nw_temp; iw++)
-      {
-        if (n_w_temp[iw] != 0) // ako je n = 0 onda taj šetač biva uništen (preskačemo ga)
-        {
-          for (int in = 1; in <= n_w_temp[iw]; in++)
-          {
-            for (k = 1; k <= 3; k++)
-            {
-              x[k][indeks + in] = x_temp[k][iw];
-              y[k][indeks + in] = y_temp[k][iw];
-            }
-            E_L[indeks + in] = E_L_temp[iw];
-            n_w[indeks + in] = n_w_temp[iw];
-          } 
-        }
-        indeks += n_w_temp[iw]; 
-      }
-      Nw = indeks; 
+      // // korak 11. - kopiranje potomaka R'_p(w) u novi ansambl
+      // memcpy(x_temp, x, sizeof(x));
+      // memcpy(y_temp, y, sizeof(y));
+      // memcpy(E_L_temp, E_L, sizeof(E_L));
+      // memcpy(n_w_temp, n_w, sizeof(n_w));
+      // Nw_temp = Nw;
+      // Nw = 0;
+      // indeks = 0;
+      // for (iw = 1; iw <= Nw_temp; iw++)
+      // {
+      //   if (n_w_temp[iw] != 0) // ako je n = 0 onda taj šetač biva uništen (preskačemo ga)
+      //   {
+      //     for (int in = 1; in <= n_w_temp[iw]; in++)
+      //     {
+      //       for (k = 1; k <= 3; k++)
+      //       {
+      //         x[k][indeks + in] = x_temp[k][iw];
+      //         y[k][indeks + in] = y_temp[k][iw];
+      //       }
+      //       E_L[indeks + in] = E_L_temp[iw];
+      //       n_w[indeks + in] = n_w_temp[iw];
+      //     } 
+      //   }
+      //   indeks += n_w_temp[iw]; 
+      // }
+      // Nw = indeks; 
 
       // skupljanje podataka po šetačima nakon redistribucije, prije kraja koraka
       for(iw = 1; iw<=Nw; iw++){

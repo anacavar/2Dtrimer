@@ -8,22 +8,19 @@ int main(int argc, char *argv[])
 {
   int Nt = 500, Nw = 80, Nb = 80, NbSkip = 40;
 
-  // epsilon = epsilon_initial;
-  epsilon = 6;
-  // gamma_var = gamma_initial;
-  gamma_var = 4.65;
-
+  epsilon = epsilon_initial;
+  gamma_var = gamma_initial;
 
   double ds;
   double da;
   // double s_min = 0.35, s_max = 0.55;
-  double s_min = 0.082, s_max = 0.55;
+  double s_min = 0.3, s_max = 0.55;
   // double alpha_min = 4, alpha_max = 5;
-  double alpha_min = 4.2, alpha_max = 4.5;
+  double alpha_min = 4.535, alpha_max = 4.60;
   double E, sigmaE;
   double r2, sigmar2;
   int N_s = 1;
-  int N_alpha = 5;
+  int N_alpha = 10;
   int count;
   da = (alpha_max - alpha_min) / N_alpha;
   ds = (s_max - s_min) / N_s;
