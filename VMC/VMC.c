@@ -377,7 +377,7 @@ double E_kin_L(double r12, double r13, double r23, double x1, double x2, double 
 
 double f_dr(double r)
 {
-    double fdr = 1 / pow(r, 2) * (gamma_var * pow((alpha / r), gamma_var) - s * r - 1 / 2);
+    double fdr = 1 / pow(r, 2) * (gamma_var * pow((alpha / r), gamma_var) - s * r - 0.5);
     return fdr;
 }
 

@@ -506,12 +506,8 @@ void DMC(double *E_return, double *sigmaE_return, int Nt, int Nw0, int Nb, int N
           } 
         }
         indeks += n_w_temp[iw]; 
-
       }
       Nw = indeks; 
-
-
-
 
       // skupljanje podataka po šetačima nakon redistribucije, prije kraja koraka
       for(iw = 1; iw<=Nw; iw++){
@@ -535,7 +531,7 @@ void DMC(double *E_return, double *sigmaE_return, int Nt, int Nw0, int Nb, int N
       // korak 10. - akumulacija lokalnih energija nakon stabilizacije (za svaki korak)
       if (ib > NbSkip)
       {
-        StE += SwE / Nw - 0.2;
+        StE += SwE / Nw;
         Str += Swr / Nw;
         St_r2 += Sw_r2 / Nw;
       }
@@ -599,7 +595,7 @@ void DMC(double *E_return, double *sigmaE_return, int Nt, int Nw0, int Nb, int N
 
 double f_dr(double r)
 {
-  double fdr = 1 / pow(r, 2) * (gamma_var * pow((alpha / r), gamma_var) - s * r - 1 / 2);
+  double fdr = 1 / pow(r, 2) * (gamma_var * pow((alpha / r), gamma_var) - s * r - 0.5);
   return fdr;
 }
 
