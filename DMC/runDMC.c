@@ -6,8 +6,11 @@ double gamma_var, alpha, s, dtau;
 
 int main()
 {
-  // int Nt=500, Nw=150, Nb=150, NbSkip=50;
-  int Nt=500, Nw=100, Nb=200, NbSkip=100;
+  // int Nt=500, Nw=50, Nb=200, NbSkip=100;
+  // int Nt=500, Nw=80, Nb=200, NbSkip=100;
+  // int Nt=500, Nw=100, Nb=200, NbSkip=100;
+  // int Nt=500, Nw=120, Nb=200, NbSkip=100;
+  int Nt=500, Nw=150, Nb=200, NbSkip=100;
 
   char batchScript[256];
   snprintf(batchScript, sizeof(batchScript), "C:\\repos\\2Dtrimer\\DMC\\prerunVMC.bat %d %d %d %d", Nt, Nw, Nb, NbSkip);
@@ -18,19 +21,14 @@ int main()
   FILE *dataE_dtau;
   dataE_dtau = fopen("dataE_dtau.txt", "w");
 
-  // // U1
-  // gamma_var = 4.77;
-  // alpha = 4.55;
-  // s = 0.3;
-  // U2
   gamma_var = gamma_initial;
   alpha = alpha_initial;
   s = s_initial;
 
-  int N = 10;
-  int nn = 5;
-  double dtau_mins[5]={0.000001, 0.00001, 0.0001, 0.001, 0.01};
-  double dtau_maxes[5]={0.000011, 0.00011, 0.0011, 0.011, 0.11};
+  int N = 5;
+  int nn = 1;
+  double dtau_mins[1]={0.001};
+  double dtau_maxes[1]={0.011};
   // double dtau_mins[2]={0.000001, 0.00001};
   // double dtau_maxes[2]={0.000011, 0.00011};
 

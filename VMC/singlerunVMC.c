@@ -12,12 +12,12 @@ int main(int argc, char *argv[])
   alpha = alpha_initial;
   s = s_initial;
   epsilon = epsilon_initial;
-  // s = 0.1;
-  // alpha = 9.4;
-  // gamma_var = 9.0;
 
-  int Nt=500, Nw=150, Nb=550, NbSkip=50;
-  // int Nt=500, Nw=1000, Nb=550, NbSkip=50;
+  // int Nt=500, Nw=50, Nb=200, NbSkip=100;
+  // int Nt=500, Nw=80, Nb=200, NbSkip=100;
+  // int Nt=500, Nw=100, Nb=200, NbSkip=100;
+  // int Nt=500, Nw=120, Nb=200, NbSkip=100;
+  int Nt=500, Nw=150, Nb=200, NbSkip=100;
 
   if(argc == 5){
     int Nt = atoi(argv[1]), Nw = atoi(argv[2]), Nb = atoi(argv[3]), NbSkip = atoi(argv[4]);
