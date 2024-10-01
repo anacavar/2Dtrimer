@@ -131,8 +131,8 @@ void DMC(double *E_return, double *sigmaE_return, int Nt, int Nw0, int Nb, int N
 
   FILE *data, *VMC_coordinates, *data_log, *data_r12, *data_angles, *data_coordinates, *data_r12_r13;
   data = fopen("DMC_data.txt", "w");
-  // VMC_coordinates = fopen("../VMC/VMC_data_coordinates.txt", "r"); // za lokalno pokretanje
-  VMC_coordinates = fopen("VMC_data_coordinates.txt", "r");  // za pokretanje na udaljenom serveru
+  VMC_coordinates = fopen("../VMC/VMC_data_coordinates.txt", "r"); // za lokalno pokretanje
+  // VMC_coordinates = fopen("VMC_data_coordinates.txt", "r");  // za pokretanje na udaljenom serveru
   if (VMC_coordinates == NULL) {
     printf("Error opening VMC_coordinates file.\n");
     exit(1);

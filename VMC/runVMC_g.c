@@ -9,13 +9,12 @@ int main(int argc, char *argv[])
   int Nt = 500, Nw = 100, Nb = 150, NbSkip = 50;
 
   epsilon = epsilon_initial;
-  // gamma_var = gamma_initial;
-  gamma_var = 7.4;
+  gamma_var = gamma_initial;
 
   double ds;
   double da;
-  double s_min = 0.6, s_max = 0.75;
-  double alpha_min = 9, alpha_max = 9.7;
+  double s_min = 0.27, s_max = 0.37;
+  double alpha_min = 4, alpha_max = 5;
   double E, sigmaE;
   double r2, sigmar2;
   int N_s = 5;

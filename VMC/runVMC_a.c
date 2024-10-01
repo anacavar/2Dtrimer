@@ -13,8 +13,8 @@ int main(int argc, char *argv[])
 
   double dg;
   double ds;
-  double gamma_min = 6.50, gamma_max = 7.8;
-  double s_min = 0.56, s_max = 0.74;
+  double gamma_min = 4.4, gamma_max = 4.9;
+  double s_min = 0.2, s_max = 0.35;
   double E, sigmaE;
   double r2, sigmar2;
   int N_gamma = 5;

@@ -14,7 +14,7 @@ int main(int argc, char *argv[])
 
   char batchScript[256];
   snprintf(batchScript, sizeof(batchScript), "C:\\repos\\2Dtrimer\\DMC\\prerunVMC.bat %d %d %d %d", Nt, Nw, Nb, NbSkip);
-  // system(batchScript); // za prethodno pokretanje VMC, kako bi odgovarali početni parametri šetača
+  system(batchScript); // za prethodno pokretanje VMC, kako bi odgovarali početni parametri šetača
 
   double E, sigmaE;
   gamma_var = gamma_initial;
